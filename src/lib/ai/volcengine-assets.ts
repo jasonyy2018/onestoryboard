@@ -27,7 +27,7 @@ function sign(options: {
   // 1. Canonical Headers & Signed Headers
   const headerEntries = Object.entries(headers)
     .map(([k, v]) => [k.toLowerCase(), v.trim()])
-    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+    .sort(([a = ""], [b = ""]) => a < b ? -1 : a > b ? 1 : 0);
 
   const canonicalHeaders = headerEntries
     .map(([k, v]) => `${k}:${v}`)
@@ -119,11 +119,11 @@ async function volcCall(action: string, body: any) {
     
     if (data.ResponseMetadata?.Error) {
       console.error(">>> VOLCENGINE ERROR RESPONSE:", JSON.stringify(data, null, 2));
-      logger.error("Volcengine Asset API Error Details", {
+      logger.error({
         action,
         error: data.ResponseMetadata.Error,
         requestId: data.ResponseMetadata.RequestId
-      });
+      }, "Volcengine Asset API Error Details");
       throw new Error(`Volcengine Asset API Error [${data.ResponseMetadata.Error.Code}]: ${data.ResponseMetadata.Error.Message}`);
     }
     

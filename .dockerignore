@@ -11,3 +11,7 @@ coverage
 .idea
 .vscode
 prisma/dev.db
+scratch
+.local-assets
+assets
+data

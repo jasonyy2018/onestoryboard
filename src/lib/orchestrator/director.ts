@@ -130,7 +130,7 @@ export async function runElCineStoryboardForProject(projectId: string): Promise<
         visualPrompt: c.visualPrompt || undefined,
       })),
       model: textModel as any,
-      narrativeStyle,
+      narrativeStyle: narrativeStyle as "THIRD_PERSON" | "FIRST_PERSON",
       language: project.language,
       targetShotsForThisScene: targetShotsForScene(scene.episodeNumber),
     });
@@ -200,7 +200,7 @@ export async function regenerateStructuredPromptsOnly(projectId: string): Promis
       status: "DRAFT",
       pipelineStage: "IDLE",
       finalVideoUrl: null,
-      episodeFinals: null,
+      episodeFinals: undefined,
       duration: null,
       completedAt: null,
       errorMessage: null,

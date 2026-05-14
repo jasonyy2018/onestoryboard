@@ -1,5 +1,5 @@
 /**
- * Worker entrypoint â€?runs in its own Node process (`pnpm start:worker`).
+ * Worker entrypoint â€” runs in its own Node process (`pnpm start:worker`).
  * Imports each worker so they auto-register with BullMQ.
  */
 import "dotenv/config";
@@ -13,11 +13,11 @@ const workers = [parseWorker, shotWorker, composeWorker, assetWorker];
 
 logger.info(
   { workers: workers.map((w) => w.name) },
-  "ðŸ› ï¸? Onestoryboard workers online",
+  "Onestoryboard workers online",
 );
 
 async function shutdown() {
-  logger.info("â?Shutting down workersâ€?);
+  logger.info("Shutting down workers...");
   await Promise.all(workers.map((w) => w.close()));
   process.exit(0);
 }

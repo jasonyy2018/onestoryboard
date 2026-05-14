@@ -15,6 +15,7 @@ dist/
 prisma/dev.db
 coverage/
 .pnpm-store/
+scratch/
 
 # 生产部署 — 本地数据目录
 assets/

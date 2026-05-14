@@ -14,10 +14,10 @@ import { filterSensitiveWords } from "./safety";
 import { runPool } from "./pipeline-concurrency";
 
 /**
- * 根据数据库中已有场次与角色，写入 EL.CINE 分镜行（结构化 imagePrompt / videoPrompt）。
+ * 根据数据库中已有场次与角色，写入 ECP 分镜行（结构化 imagePrompt / videoPrompt）。
  * 由完整流水线在资产生成之后调用；也可在「仅重生提示词」流程中在清空 Shot 后单独调用。
  */
-export async function runElCineStoryboardForProject(projectId: string): Promise<void> {
+export async function runEcpStoryboardForProject(projectId: string): Promise<void> {
   const project = await db.project.findUniqueOrThrow({ where: { id: projectId } });
   const config = (project.modelConfig as Record<string, unknown> | null) ?? {};
   const textModel = (config.textModel as string) || env.DEFAULT_TEXT_MODEL;
@@ -28,7 +28,7 @@ export async function runElCineStoryboardForProject(projectId: string): Promise<
     data: { pipelineStage: "STORYBOARDING" },
   });
 
-  logger.info({ projectId }, "[director] EL.CINE storyboard table start");
+  logger.info({ projectId }, "[director] ECP storyboard table start");
 
   const scenes = await db.scene.findMany({
     where: { projectId },
@@ -170,18 +170,18 @@ export async function runElCineStoryboardForProject(projectId: string): Promise<
     data: { pipelineStage: "DONE" },
   });
 
-  logger.info({ projectId }, "[director] EL.CINE storyboard table complete");
+  logger.info({ projectId }, "[director] ECP storyboard table complete");
 }
 
 /**
- * 删除所有分镜行后仅重跑 EL.CINE（不重新解析全文、不重画 MRI）。
+ * 删除所有分镜行后仅重跑 ECP（不重新解析全文、不重画 MRI）。
  * 会清空成片相关字段；调用方应先取消 BullMQ 中与该项目相关的排队任务。
  * 若 LLM 中途失败，会再次清空分镜并写入 FAILED，避免留下半套镜头。
  */
 export async function regenerateStructuredPromptsOnly(projectId: string): Promise<void> {
   await db.shot.deleteMany({ where: { scene: { projectId } } });
   try {
-    await runElCineStoryboardForProject(projectId);
+    await runEcpStoryboardForProject(projectId);
   } catch (err) {
     await db.shot.deleteMany({ where: { scene: { projectId } } });
     await db.project.update({
@@ -213,7 +213,7 @@ export async function regenerateStructuredPromptsOnly(projectId: string): Promis
  * Director: 与制片步骤一致的多段流水线。
  * 1. 导入小说或剧本 → 解析（小说在此阶段转为标准剧本与场次结构）。
  * 2. 资产生成 — 角色·场景·道具 MRI 参考图（画风与后续生图/生视频锚点；默认与全站一致用腾讯混元生图 OG，见 env.DEFAULT_IMAGE_MODEL / project.modelConfig.imageModel）。
- * 3. EL.CINE — 按场次生成分镜「结构化提示词」表（imagePrompt / videoPrompt 等写入 Shot）。
+ * 3. ECP — 按场次生成分镜「结构化提示词」表（imagePrompt / videoPrompt 等写入 Shot）。
  * 4. 出片队列（BullMQ shot 任务）— 每镜：imagePrompt + Part1 模板 → 多格真人制片板图入库；再以 videoPrompt + Part2 模板，以「制片板图为首张参考图 + MRI」调用 Seedance 2.0 生成约 15s 视频（含原生音频）；最后 compose 按「集」将本集全部镜头合成一条集成片（多集则多条，见 Project.episodeFinals）。
  */
 export async function runParseAndStoryboard(projectId: string) {
@@ -234,8 +234,8 @@ export async function runParseAndStoryboard(projectId: string) {
 
   // 已完成 storyboard（有场次但无 shots）→ 直接重跑 storyboard 生成 shots
   if (hasScenes && (resumeStage === "STORYBOARDING" || resumeStage === "DONE")) {
-    logger.info({ projectId, resumeStage }, "[director] scenes exist, re-run storyboard only");
-    await runElCineStoryboardForProject(projectId);
+    logger.info({ projectId, resumeStage }, "[director] scenes exist, re-run ECP storyboard only");
+    await runEcpStoryboardForProject(projectId);
     const { fanoutAssetsAndCompose } = await import("@/lib/queue/flows");
     await fanoutAssetsAndCompose(projectId);
     return;
@@ -469,8 +469,8 @@ export async function runParseAndStoryboard(projectId: string) {
       });
     }
 
-    // ----- Stage 3: STORYBOARDING (EL.CINE 表) -----
-    await runElCineStoryboardForProject(projectId);
+    // ----- Stage 3: STORYBOARDING (ECP 表) -----
+    await runEcpStoryboardForProject(projectId);
 
     logger.info({ projectId }, "[director] pipeline setup complete");
 

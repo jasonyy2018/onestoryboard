@@ -11,7 +11,7 @@
 1. 导入小说或标准剧本（`Project.rawScript`，语言 `Project.language`: `zh` | `en`）。
 2. **按集 / 场解析** — 场次结构 + **约 15 秒/镜** 的 `Shot` 行（Episode = 集；镜 = 生成最小单位）。
 3. **MRI 资产** — 角色、场景、道具参考图（一致性锚点）。
-4. **双提示词（EL.CINE）** — 每镜写入 **`imagePrompt`**（多格真人制片板 · 生图侧）与 **`videoPrompt`**（Seedance 图生视频侧）。
+4. **双提示词（ECP）** — 每镜写入 **`imagePrompt`**（多格真人制片板 · 生图侧）与 **`videoPrompt`**（Seedance 图生视频侧）。
 5. **Part 1** — 用 `imagePrompt` + `prompts/part1-storyboard.{zh,en}.md` 生成制片板静帧（代码入口 `storyboardKeyframeUserPrompt`）。
 6. **Part 2** — 用 `videoPrompt` + `prompts/part2-seedance.{zh,en}.md`，以 **制片板成图为首张参考图 + MRI**，走 **Seedance 2.0**（**`generate_audio: true`**）。
 7. **FFmpeg** 按集拼接多段 MP4，**音频 AAC**（`src/lib/orchestrator/composer.agent.ts`）。
@@ -36,7 +36,7 @@
 
 | 文件 | 用途 |
 |------|------|
-| `prompts/part1-storyboard.zh.md` | 中文 · Part 1 制片板 / 分镜表图总锁；占位符 `{{LOCK_TEXT}}` = 该镜 EL.CINE `imagePrompt` 正文 |
+| `prompts/part1-storyboard.zh.md` | 中文 · Part 1 制片板 / 分镜表图总锁；占位符 `{{LOCK_TEXT}}` = 该镜 ECP `imagePrompt` 正文 |
 | `prompts/part1-storyboard.en.md` | English · same |
 | `prompts/part2-seedance.zh.md` | 中文 · Part 2 Seedance 导演封装 + 原生音轨说明；`{{ROW_SCRIPT}}` = 行内场景/人物/运镜/情绪块 |
 | `prompts/part2-seedance.en.md` | English · same |
@@ -51,8 +51,8 @@
 
 | Brief 中的 Agent | 实现位置 | 说明 |
 |------------------|----------|------|
-| ScriptParserAgent | `runParseAndStoryboard`（`src/lib/orchestrator/director.ts`） | 小说/剧本 → Scene + Character；再 EL.CINE → `Shot` 行 |
-| StoryboardAgent（结构化提示） | `generateStoryboard` + `runElCineStoryboardForProject` | 写入 `Shot.imagePrompt` / `videoPrompt` |
+| ScriptParserAgent | `runParseAndStoryboard`（`src/lib/orchestrator/director.ts`） | 小说/剧本 → Scene + Character；再 ECP → `Shot` 行 |
+| StoryboardAgent（结构化提示） | `generateStoryboard` + `runEcpStoryboardForProject` | 写入 `Shot.imagePrompt` / `videoPrompt` |
 | StoryboardAgent（Part 1 成图） | BullMQ `shot` worker 前半段 | `storyboardKeyframeUserPrompt` + `generateImage` |
 | VideoGeneratorAgent | BullMQ `shot` worker 后半段 | `wrapSeedancePart2Template` + `generateVideo(..., generateAudio: true)` |
 | ContinuityChecker | `continuityCheckerNode`（`src/lib/langgraph/nodes.ts`） | **当前为 stub**，可后续接一致性校验 |

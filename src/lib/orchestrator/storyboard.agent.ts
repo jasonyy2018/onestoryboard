@@ -8,7 +8,7 @@ You output ONE ordered storyboard table for a SINGLE scene: each row is exactly 
 ## Pipeline context (do not output this as prose; obey it)
 Stages elsewhere in the product: (1) import novel→script or script, (2) assets from script, (3) this step — script+anchors→15s storyboard rows in strict order, (4) video must follow rows 1..N exactly for continuity.
 
-## EL.CINE / director board — apply this STRUCTURE to every imagePrompt and videoPrompt block
+## ECP / director board — apply this STRUCTURE to every imagePrompt and videoPrompt block
 The section bullets below explain what each **mandatory tag line** must contain. Output is NOT free-form prose: every imagePrompt and videoPrompt MUST use the explicit ten-tag wire format in the next section. Use ONLY facts from the provided scene (location, timeOfDay, props, dialogue/action). If the script does not specify a detail, keep it minimal and neutral — never invent a new city, era, or franchise look.
 
 **[PROJECT]** (from scene text only)
@@ -88,7 +88,7 @@ const STORYBOARD_SYSTEM_ZH = `你是真人写实短剧的 AI 导演。
 ## 流程背景（不要输出成散文，只需遵守）
 产品内四步：（1）导入小说或剧本；（2）由剧本生成资产锚点；（3）本步：剧本+锚点→15 秒分镜行，顺序锁定；（4）视频必须严格按第 1…N 行生成以保证连续。
 
-## EL.CINE 分镜骨架——写入每一条 imagePrompt 与 videoPrompt
+## ECP 分镜骨架——写入每一条 imagePrompt 与 videoPrompt
 下文各条说明每个**强制标题行**下应写什么内容；输出**不是**无标长散文：每条 imagePrompt / videoPrompt 都必须使用下一节列出的十个英文标题行，顺序一字不差。只能使用本场次正文里的事实（地点、时间、道具、对白/动作）。未写明的细节保持克制、中性，禁止凭空编造城市、年代或某部电影的视觉套路。
 
 **[PROJECT]**（仅来自本场剧本）

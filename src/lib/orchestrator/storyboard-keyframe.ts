@@ -1,5 +1,5 @@
 /**
- * Prompt helpers for EL.CINE storyboard keyframe images (wording only).
+ * Prompt helpers for ECP storyboard keyframe images (wording only).
  * 分镜表图固定为多格真人制片板；该图作为视频生成的首张参考图（见 shot.worker）。
  * Part 1 完整锁来自仓库根目录 `prompts/part1-storyboard.{zh,en}.md`。
  */

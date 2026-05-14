@@ -1,7 +1,7 @@
 import { loadPromptTemplate, resolvePromptLocale } from "@/lib/prompts/load-template";
 
 /**
- * Wraps the per-shot EL.CINE row body with the canonical Part 2 (Seedance) brief
+ * Wraps the per-shot ECP row body with the canonical Part 2 (Seedance) brief
  * from /prompts/part2-seedance.{zh,en}.md — used before cinematic safety wrap.
  */
 export function wrapSeedancePart2Template(rowScript: string, language: string): string {

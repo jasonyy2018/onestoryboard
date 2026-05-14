@@ -14,7 +14,7 @@ export type ProjectUi = {
     saved: string;
     autoSaveOn: string;
     reparseScript: string;
-    /** 保留场次/MRI，仅删除分镜行并重跑 EL.CINE LLM */
+    /** 保留场次/MRI，仅删除分镜行并重跑 ECP LLM */
     regenerateStructuredPrompts: string;
     regenerateStructuredPromptsTitle: string;
     regenerateStructuredPromptsNeedScenes: string;
@@ -224,7 +224,7 @@ const ZH_UI: ProjectUi = {
     saved: "已保存",
     autoSaveOn: "输入后自动保存",
     reparseScript: "重新解析剧本",
-    regenerateStructuredPrompts: "仅重生双提示词（EL.CINE）",
+    regenerateStructuredPrompts: "仅重生双提示词（ECP）",
     regenerateStructuredPromptsTitle:
       "删除当前所有分镜行与成片记录，按现有场次剧本与角色设定重新生成结构化 imagePrompt / videoPrompt；不重新解析全文、不重画 MRI。已排队出片任务会被取消。",
     regenerateStructuredPromptsNeedScenes: "需先完成一次「生成视频」解析流程，使项目中存在至少一个场次后再使用。",
@@ -270,7 +270,7 @@ const ZH_UI: ProjectUi = {
     stages: [
       { label: "导入与分集", hint: "小说或剧本 → 标准场次结构（集/场）" },
       { label: "MRI 资产", hint: "角色·场景·道具参考图（一致性锚点）" },
-      { label: "双提示词", hint: "每镜 imagePrompt + videoPrompt（EL.CINE 写入）" },
+      { label: "双提示词", hint: "每镜 imagePrompt + videoPrompt（ECP 写入）" },
       { label: "制片与成片", hint: "制片板图（生图）→ Seedance（首参=板图+MRI）→ 按集拼接" },
     ],
   },
@@ -341,7 +341,7 @@ const ZH_UI: ProjectUi = {
     generatedIn: "生成耗时",
     shots: "个镜头",
     runtime: "成片时长",
-    storyboard: "EL.CINE 分镜",
+    storyboard: "ECP 分镜",
     share: "分享",
     rerender: "重新渲染",
     downloadMp4: "下载 MP4",
@@ -473,9 +473,9 @@ const EN_UI: ProjectUi = {
     saved: "Saved",
     autoSaveOn: "Auto-saves after edits",
     reparseScript: "Re-parse script",
-    regenerateStructuredPrompts: "Regenerate two prompts (EL.CINE) only",
+    regenerateStructuredPrompts: "Regenerate two prompts (ECP) only",
     regenerateStructuredPromptsTitle:
-      "Deletes all shot rows and episode masters, then re-runs the EL.CINE model on your current scenes and cast MRI text to rebuild structured imagePrompt / videoPrompt. Does not re-parse the full script or regenerate MRI plates. Cancels queued render jobs.",
+      "Deletes all shot rows and episode masters, then re-runs the ECP model on your current scenes and cast MRI text to rebuild structured imagePrompt / videoPrompt. Does not re-parse the full script or regenerate MRI plates. Cancels queued render jobs.",
     regenerateStructuredPromptsNeedScenes:
       "Run “Generate video” once so the project has at least one parsed scene before using this.",
     regenerateStructuredPromptsWaitGenerating:
@@ -521,7 +521,7 @@ const EN_UI: ProjectUi = {
     stages: [
       { label: "Import & split", hint: "Novel or script → episode/scene structure" },
       { label: "MRI assets", hint: "Cast / location / prop reference plates" },
-      { label: "Two prompts", hint: "Per-shot imagePrompt + videoPrompt (EL.CINE)" },
+      { label: "Two prompts", hint: "Per-shot imagePrompt + videoPrompt (ECP)" },
       { label: "Render & master", hint: "Panel image → Seedance (panel first + MRI) → stitch" },
     ],
   },
@@ -592,7 +592,7 @@ const EN_UI: ProjectUi = {
     generatedIn: "Generated in",
     shots: "shots",
     runtime: "Runtime",
-    storyboard: "EL.CINE board",
+    storyboard: "ECP board",
     share: "Share",
     rerender: "Re-render",
     downloadMp4: "Download MP4",

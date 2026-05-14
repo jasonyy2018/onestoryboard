@@ -43,12 +43,12 @@ export const StoryboardSchema = z.object({
       imagePrompt: z
         .string()
         .describe(
-          "EL.CINE wire format: multi-line string starting with **[PROJECT]** then **[VISUAL STYLE]** … **[RENDER QUALITY]** in that exact order (see storyboard system prompt). Still-frame / storyboard-panel intent only.",
+          "ECP wire format: multi-line string starting with **[PROJECT]** then **[VISUAL STYLE]** … **[RENDER QUALITY]** in that exact order (see storyboard system prompt). Still-frame / storyboard-panel intent only.",
         ),
       videoPrompt: z
         .string()
         .describe(
-          "Same ten EL.CINE headers as imagePrompt, same order; content describes ~15s motion (subject, camera, environment) for this beat.",
+          "Same ten ECP headers as imagePrompt, same order; content describes ~15s motion (subject, camera, environment) for this beat.",
         ),
       charactersInShot: z.array(z.string()).default([]),
     }),

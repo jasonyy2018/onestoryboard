@@ -8,7 +8,7 @@ import { StoryboardPanel } from "@/components/editor/StoryboardPanel";
 import { ModelSettings } from "@/components/editor/ModelSettings";
 import { AssetsPanel } from "@/components/editor/AssetsPanel";
 import { startGeneration, reparseProject } from "@/app/actions/projects";
-import { regenerateStructuredPrompts } from "@/app/actions/el-cine";
+import { regenerateStructuredPrompts } from "@/app/actions/ecp";
 import { getProjectUi, projectLocale, projectStatusLabel } from "@/lib/i18n/project-ui";
 
 export const dynamic = "force-dynamic";
@@ -44,8 +44,8 @@ export default async function EditorPage({
 
   const episodeDisplay = isEn ? `${project.episodeCount} ${ui.editor.episodes}` : `${project.episodeCount}${ui.editor.episodes}`;
 
-  const canRegenerateElCine = project.scenes.length > 0 && project.status !== "GENERATING";
-  const regenerateElCineTitle = !canRegenerateElCine
+  const canRegenerateEcp = project.scenes.length > 0 && project.status !== "GENERATING";
+  const regenerateEcpTitle = !canRegenerateEcp
     ? project.scenes.length === 0
       ? ui.editor.regenerateStructuredPromptsNeedScenes
       : ui.editor.regenerateStructuredPromptsWaitGenerating
@@ -127,10 +127,10 @@ export default async function EditorPage({
               <RefreshCw className="h-3 w-3" /> {ui.editor.reparseScript}
             </button>
           </form>
-          <form action={regenerateStructuredPrompts.bind(null, id)} className="mr-1 shrink-0" title={regenerateElCineTitle}>
+          <form action={regenerateStructuredPrompts.bind(null, id)} className="mr-1 shrink-0" title={regenerateEcpTitle}>
             <button
               type="submit"
-              disabled={!canRegenerateElCine}
+              disabled={!canRegenerateEcp}
               className="inline-flex h-8 items-center gap-1.5 rounded border border-border-subtle bg-bg-card px-3 text-xs font-medium text-fg-muted hover:bg-bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-45"
             >
               <LayoutGrid className="h-3 w-3 shrink-0" /> {ui.editor.regenerateStructuredPrompts}

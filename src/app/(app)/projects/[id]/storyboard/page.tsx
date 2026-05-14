@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { StoryboardRichView } from "@/components/pipeline/StoryboardRichView";
 import { buildStoryboardRows } from "@/components/pipeline/storyboard-types";
 import { getProjectUi, projectStatusLabel } from "@/lib/i18n/project-ui";
-import { regenerateStructuredPrompts } from "@/app/actions/el-cine";
+import { regenerateStructuredPrompts } from "@/app/actions/ecp";
 
 export const dynamic = "force-dynamic";
 
@@ -45,8 +45,8 @@ export default async function ProjectStoryboardPage({
   const ui = getProjectUi(project.language);
   const loc = project.language;
 
-  const canRegenerateElCine = project.scenes.length > 0 && project.status !== "GENERATING";
-  const regenerateElCineTitle = !canRegenerateElCine
+  const canRegenerateEcp = project.scenes.length > 0 && project.status !== "GENERATING";
+  const regenerateEcpTitle = !canRegenerateEcp
     ? project.scenes.length === 0
       ? ui.editor.regenerateStructuredPromptsNeedScenes
       : ui.editor.regenerateStructuredPromptsWaitGenerating
@@ -74,15 +74,15 @@ export default async function ProjectStoryboardPage({
           {ui.storyboardPage.result}
         </Link>
         <span className="text-fg-subtle">|</span>
-        <form action={regenerateStructuredPrompts.bind(null, id)} className="inline shrink-0" title={regenerateElCineTitle}>
+        <form action={regenerateStructuredPrompts.bind(null, id)} className="inline shrink-0" title={regenerateEcpTitle}>
           <button
             type="submit"
-            disabled={!canRegenerateElCine}
+            disabled={!canRegenerateEcp}
             className="inline-flex h-8 items-center gap-1.5 rounded border border-border-subtle bg-bg-card px-2.5 text-xs font-medium text-fg-muted hover:bg-bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-45 sm:px-3"
           >
             <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden sm:inline">{ui.editor.regenerateStructuredPrompts}</span>
-            <span className="sm:hidden">EL.CINE</span>
+            <span className="sm:hidden">ECP</span>
           </button>
         </form>
         <div className="flex-1" />

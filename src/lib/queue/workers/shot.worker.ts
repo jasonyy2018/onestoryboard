@@ -239,14 +239,14 @@ export const shotWorker = new Worker(
       (shot.videoPrompt && shot.videoPrompt.trim()) || shot.prompt || shot.imagePrompt;
 
     const elcineLine = isZh
-      ? `【EL.CINE · 出片】参考图为 reference_image（约束风格与构图，非首帧锁定），视频内容完全由下方脚本驱动，约 ${shot.duration ?? 15} 秒。`
-      : `[EL.CINE · Render] Reference image is passed as reference_image (style/composition guide, NOT first-frame lock). Video is fully driven by the script below (~${shot.duration ?? 15}s).`;
+      ? `【ECP · 出片】参考图为 reference_image（约束风格与构图，非首帧锁定），视频内容完全由下方脚本驱动，约 ${shot.duration ?? 15} 秒。`
+      : `[ECP · Render] Reference image is passed as reference_image (style/composition guide, NOT first-frame lock). Video is fully driven by the script below (~${shot.duration ?? 15}s).`;
 
     const deliverableLock = isZh
       ? `【成片约束】纯叙事实拍，连贯时空；参考图仅作风格参考，不得复刻原图。禁止出现分镜格线、九宫格框、制作板水印等制作素材。`
       : `[Deliverable lock] In-world photoreal footage, continuous time/space. Reference image guides style only — do not reproduce it literally. No grid lines, board watermarks, or PiP artifacts.`;
 
-    // Part 2 时间轴脚本：直接使用 EL.CINE 生成的完整 videoPrompt，
+    // Part 2 时间轴脚本：直接使用 ECP 生成的完整 videoPrompt，
     // 保持与 Part 1 故事板图的 12 格节拍严格对应，不做二次切割重组。
     const loc = shot.scene.location;
     const timeOfDay = shot.scene.timeOfDay ? (isZh ? ` · ${shot.scene.timeOfDay}` : ` · ${shot.scene.timeOfDay}`) : "";

@@ -47,7 +47,7 @@ style: |
 2. **一致性资产 (MRI Assets)**：
    - 自动化生成角色、场景、道具的参考图，作为视觉一致性锚点。
 3. **分镜生成 (Storyboard)**：
-   - 双提示词引擎（EL.CINE）：同时生成制片板图 (Image) 与 视频 (Video) 提示词。
+   - 双提示词引擎（ECP）：同时生成制片板图 (Image) 与 视频 (Video) 提示词。
 4. **引擎生成 (AI Generation)**：
    - **Tencent OG Image 2** (生图) + **Seedance 2.0** (图生视频 + 原生音轨)。
 
@@ -65,7 +65,7 @@ style: |
 ---
 
 # 5. AI Agent 拓扑结构
-- **ScriptParserAgent**：负责剧本结构化与 EL.CINE 提示词编写。
+- **ScriptParserAgent**：负责剧本结构化与 ECP 提示词编写。
 - **StoryboardAgent**：控制制片板静帧生成与视觉锁定。
 - **VideoGeneratorAgent**：驱动 Seedance 进行视频与音轨生成。
 - **ComposerAgent**：负责最终集成的视频剪辑与导出。

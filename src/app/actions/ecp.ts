@@ -6,7 +6,7 @@ import { cancelProjectJobs } from "@/lib/queue/flows";
 import { regenerateStructuredPromptsOnly } from "@/lib/orchestrator/director";
 
 /**
- * 保留场次与 MRI，删除所有分镜行并重跑 EL.CINE（结构化 imagePrompt / videoPrompt）。
+ * 保留场次与 MRI，删除所有分镜行并重跑 ECP（结构化 imagePrompt / videoPrompt）。
  * 独立文件，避免在 `projects.ts` 顶层引用 orchestrator 影响 client/server 边界打包。
  */
 export async function regenerateStructuredPrompts(projectId: string) {

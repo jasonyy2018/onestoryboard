@@ -57,6 +57,10 @@ export async function dispatchPipeline(projectId: string) {
  *     ├─ shot 1.1
  *     ├─ shot 1.2
  *     ├─ ... (parallel)
+ *
+ * Already-completed shots (status=READY, videoUrl set) are skipped by the worker itself.
+ * To allow re-queuing of failed/stalled shots we remove any stale BullMQ job entries
+ * whose DB status is not READY before adding the new flow.
  */
 export async function fanoutAssetsAndCompose(projectId: string) {
   const shots = await db.shot.findMany({
@@ -75,6 +79,22 @@ export async function fanoutAssetsAndCompose(projectId: string) {
       "No shots in database; parse/storyboard did not complete. Re-run generation from the editor or check workers/logs.",
     );
   }
+
+  // Clear stale BullMQ job entries for shots that are not yet READY so that
+  // BullMQ's dedup-by-jobId does not silently skip them on re-run.
+  const incompleteShotIds = shots
+    .filter((s) => !(s.status === "READY" && s.videoUrl))
+    .map((s) => s.id);
+
+  await Promise.all([
+    ...incompleteShotIds.map((id) => queues.shot.remove(`shot-${id}`).catch(() => {})),
+    queues.compose.remove(`compose-${projectId}`).catch(() => {}),
+  ]);
+
+  logger.info(
+    { projectId, total: shots.length, requeue: incompleteShotIds.length },
+    "[fanoutAssetsAndCompose] cleared stale jobs, building flow",
+  );
 
   const shotChildren = shots.map((shot) => ({
     name: `shot-${shot.id}`,

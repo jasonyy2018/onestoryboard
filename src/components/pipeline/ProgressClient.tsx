@@ -80,8 +80,10 @@ export function ProgressClient({ project: initialProject, initialShots }: Props)
   }, [initialProject.id]);
 
   const isPaused = project.status === "PAUSED";
+  const isFailed = project.status === "FAILED";
   const isCompleted = project.status === "COMPLETED";
   const isCancelled = project.status === "CANCELLED";
+  const canResume = isPaused || isFailed;
 
   return (
     <div className="flex h-screen flex-col bg-bg">
@@ -132,7 +134,7 @@ export function ProgressClient({ project: initialProject, initialShots }: Props)
           {ui.progress.storyboardLink}
         </Link>
 
-        {isPaused ? (
+        {canResume ? (
           <form action={resumeGeneration.bind(null, initialProject.id)}>
             <button
               type="submit"

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 WSAI. All Rights Reserved.
+// Proprietary and confidential. Unauthorized use prohibited.
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";

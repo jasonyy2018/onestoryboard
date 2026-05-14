@@ -2,6 +2,8 @@
   "name": "Onestoryboard",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "WSAI",
   "type": "module",
   "scripts": {
     "dev": "next dev --turbo",

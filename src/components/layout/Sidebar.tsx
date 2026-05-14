@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Sparkles, Folder, Image as ImageIcon, Users, Settings2, Plus, Globe, ChevronDown, ChevronRight, Map, Box } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 
@@ -27,6 +28,9 @@ export function Sidebar({ projectCount = 0 }: { projectCount?: number }) {
   const [isAssetsOpen, setIsAssetsOpen] = React.useState(true);
   const queue = useQueueStats();
   const pct = queue.total > 0 ? Math.round((queue.active / queue.total) * 100) : 0;
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
   return (
     <aside className="flex h-full w-[260px] shrink-0 flex-col gap-6 bg-bg-elevated p-5">
@@ -51,10 +55,19 @@ export function Sidebar({ projectCount = 0 }: { projectCount?: number }) {
         <div className="px-2.5 pb-1 font-mono text-[10px] tracking-widest text-fg-subtle uppercase">
           {t.sidebar.workspace}
         </div>
-        <NavItem icon={<Folder className="h-4 w-4 text-accent-purple" />} active label={t.sidebar.projects} badge={String(projectCount)} />
-        
+
+        {/* 我的项目 */}
+        <NavLink
+          href="/projects"
+          icon={<Folder className="h-4 w-4 text-accent-purple" />}
+          label={t.sidebar.projects}
+          badge={String(projectCount)}
+          active={isActive("/projects")}
+        />
+
+        {/* 资产中心 */}
         <div>
-          <button 
+          <button
             onClick={() => setIsAssetsOpen(!isAssetsOpen)}
             className="flex h-9 w-full items-center gap-2.5 rounded px-2.5 text-left text-sm text-fg-muted transition-colors hover:text-fg"
           >
@@ -62,36 +75,40 @@ export function Sidebar({ projectCount = 0 }: { projectCount?: number }) {
             <span className="flex-1">{(t.sidebar as any).assetCenter}</span>
             {isAssetsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
-          
+
           {isAssetsOpen && (
             <div className="mt-0.5 flex flex-col gap-0.5 pl-9">
-              <NavItem 
-                icon={<Users className="h-3.5 w-3.5" />} 
-                label={(t.sidebar as any).characterLib} 
-                onClick={() => window.location.href = "/assets/characters"}
+              <NavLink
+                href="/assets/characters"
+                icon={<Users className="h-3.5 w-3.5" />}
+                label={(t.sidebar as any).characterLib}
+                active={isActive("/assets/characters")}
                 small
               />
-              <NavItem 
-                icon={<Map className="h-3.5 w-3.5" />} 
-                label={(t.sidebar as any).sceneLib} 
-                onClick={() => window.location.href = "/assets/scenes"}
+              <NavLink
+                href="/assets/scenes"
+                icon={<Map className="h-3.5 w-3.5" />}
+                label={(t.sidebar as any).sceneLib}
+                active={isActive("/assets/scenes")}
                 small
               />
-              <NavItem 
-                icon={<Box className="h-3.5 w-3.5" />} 
-                label={(t.sidebar as any).propLib} 
-                onClick={() => window.location.href = "/assets/props"}
+              <NavLink
+                href="/assets/props"
+                icon={<Box className="h-3.5 w-3.5" />}
+                label={(t.sidebar as any).propLib}
+                active={isActive("/assets/props")}
                 small
               />
             </div>
           )}
         </div>
 
-        <NavItem 
-          icon={<Settings2 className="h-4 w-4" />} 
-          label={t.sidebar.settings} 
-          onClick={() => alert("请进入具体项目进行模型配置")}
-        />
+        {/* 模型设置（进入项目后配置）*/}
+        <div className="flex h-9 items-center gap-2.5 rounded px-2.5 text-sm text-fg-subtle cursor-not-allowed">
+          <Settings2 className="h-4 w-4" />
+          <span className="flex-1">{t.sidebar.settings}</span>
+          <span className="font-mono text-[10px] text-fg-subtle">项目内配置</span>
+        </div>
       </nav>
 
       <div className="mt-auto flex flex-col gap-3">
@@ -127,33 +144,33 @@ export function Sidebar({ projectCount = 0 }: { projectCount?: number }) {
   );
 }
 
-function NavItem({
+function NavLink({
+  href,
   icon,
   label,
   badge,
   active,
   small,
-  onClick,
 }: {
+  href: string;
   icon: React.ReactNode;
   label: string;
   badge?: string;
   active?: boolean;
   small?: boolean;
-  onClick?: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2.5 rounded px-2.5 text-left transition-colors ${
+    <Link
+      href={href}
+      className={`flex items-center gap-2.5 rounded px-2.5 transition-colors ${
         small ? "h-8 text-[13px]" : "h-9 text-sm"
       } ${
-        active ? "bg-bg-card text-fg" : "text-fg-muted hover:text-fg"
+        active ? "bg-bg-card text-fg" : "text-fg-muted hover:text-fg hover:bg-bg-card/50"
       }`}
     >
       {icon}
       <span className="flex-1">{label}</span>
       {badge && <span className="font-mono text-[11px] text-fg-muted">{badge}</span>}
-    </button>
+    </Link>
   );
 }

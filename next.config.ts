@@ -7,6 +7,16 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
   },
+  // 禁止 Next.js 在响应头里写 s-maxage，避免 Cloudflare 缓存页面 HTML
+  // 但保留 /_next/static/ 资源的长期缓存（由 Next.js 自动处理 immutable）
+  headers: async () => [
+    {
+      source: "/((?!_next/static|_next/image|favicon.ico).*)",
+      headers: [
+        { key: "Cache-Control", value: "no-store, must-revalidate" },
+      ],
+    },
+  ],
   images: {
     remotePatterns: [
       // 阿里云 OSS / DashScope

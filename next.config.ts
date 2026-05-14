@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.public.blob.vercel-storage.com" },
       // R2 / MinIO（可选）
       { protocol: "https", hostname: "**.r2.cloudflarestorage.com" },
+      // 本地资产（开发 / 自托管）
+      { protocol: "http",  hostname: "localhost" },
+      { protocol: "https", hostname: "localhost" },
+      // 生产域名（通配符支持所有子域）
+      { protocol: "https", hostname: "*.togomol.com" },
+      { protocol: "https", hostname: "togomol.com" },
     ],
   },
 };

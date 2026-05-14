@@ -17,6 +17,10 @@ COPY . .
 ENV SKIP_ENV_VALIDATION=1
 # 明确告知 Prisma 生成 linux-musl-openssl-3.0.x 二进制（Alpine + OpenSSL 3）
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+# NEXT_PUBLIC_APP_URL 在构建时烘焙进 JS bundle，运行时 .env 无效
+# 构建时必须传入：docker build --build-arg NEXT_PUBLIC_APP_URL=https://your-domain.com
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 RUN mkdir -p public
 RUN pnpm prisma generate
 RUN pnpm build

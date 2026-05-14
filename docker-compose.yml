@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: app
+      args:
+        # NEXT_PUBLIC_APP_URL 在构建时烘焙进 bundle，此处必须与生产域名一致
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     ports:
       - "0.0.0.0:3000:3000"
     env_file: .env

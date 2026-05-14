@@ -37,7 +37,7 @@ export const composeWorker = new Worker(
         { scene: { order: "asc" } },
         { order: "asc" },
       ],
-      select: { videoUrl: true, scene: { select: { episodeNumber: true } } },
+      select: { videoUrl: true, imageUrl: true, scene: { select: { episodeNumber: true } } },
     });
 
     if (shots.length === 0) {
@@ -59,6 +59,7 @@ export const composeWorker = new Worker(
       if (urls.length === 0) continue;
       const r = await composeFinalVideo({
         projectId,
+        episodeNumber: ep,
         shotVideoUrls: urls,
       });
       episodeFinals.push({
@@ -83,7 +84,7 @@ export const composeWorker = new Worker(
         finalVideoUrl: primaryUrl,
         episodeFinals: episodeFinals as object[],
         duration: totalDuration,
-        thumbnailUrl: shots[0]?.videoUrl ?? null,
+        thumbnailUrl: shots[0]?.imageUrl ?? null,
         completedAt: new Date(),
       },
     });

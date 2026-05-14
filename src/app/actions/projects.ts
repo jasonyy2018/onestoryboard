@@ -122,8 +122,9 @@ export async function resumeGeneration(projectId: string) {
     where: { id: projectId },
     data: {
       status: "GENERATING",
+      errorMessage: null,
       // Failed runs can leave pipelineStage past PARSING with zero shots; reset so UX matches dispatch logic.
-      ...(shotCount === 0 ? { pipelineStage: "PARSING" as const, errorMessage: null } : {}),
+      ...(shotCount === 0 ? { pipelineStage: "PARSING" as const } : {}),
     },
   });
 

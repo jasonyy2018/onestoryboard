@@ -9,6 +9,7 @@ ffmpeg.setFfmpegPath((ffmpegPath as unknown as { path: string }).path);
 
 export interface ComposerInput {
   projectId: string;
+  episodeNumber?: number;
   shotVideoUrls: string[]; // ordered
 }
 
@@ -60,8 +61,9 @@ export async function composeFinalVideo(input: ComposerInput): Promise<ComposerR
     });
 
     const finalBuffer = await readFile(outPath);
+    const epSuffix = input.episodeNumber != null ? `ep${input.episodeNumber}-` : "";
     const videoUrl = await persistAsset({
-      key: `projects/${input.projectId}/final.mp4`,
+      key: `projects/${input.projectId}/${epSuffix}final.mp4`,
       data: finalBuffer,
       contentType: "video/mp4",
     });

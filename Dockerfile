@@ -10,17 +10,22 @@ RUN pnpm install --frozen-lockfile
 
 # ---------- builder ----------
 FROM base AS builder
+# OpenSSL 供 Prisma schema engine 使用
+RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV SKIP_ENV_VALIDATION=1
+# 明确告知 Prisma 生成 linux-musl-openssl-3.0.x 二进制（Alpine + OpenSSL 3）
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
 RUN mkdir -p public
 RUN pnpm prisma generate
 RUN pnpm build
 
 # ---------- app（Next.js + Worker 合并单容器）----------
-FROM base AS app
+FROM node:22-alpine AS app
 ENV NODE_ENV=production
-RUN apk add --no-cache ffmpeg wget
+# OpenSSL + ffmpeg + wget（Prisma 运行时 + 视频合成 + 健康检查）
+RUN apk add --no-cache openssl ffmpeg wget
 WORKDIR /app
 
 # Next.js standalone 产物
@@ -31,7 +36,7 @@ COPY --from=builder /app/public ./public
 # Prisma schema（迁移用）
 COPY --from=builder /app/prisma ./prisma
 
-# Worker 源码 + 依赖（tsx 运行）
+# Worker 源码 + 完整 node_modules（含 tsx + Prisma 二进制）
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/tsconfig.json ./
@@ -47,7 +52,7 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

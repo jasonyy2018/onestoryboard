@@ -1,0 +1,218 @@
+// Prisma schema · Naohaiyi
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Models ============
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  plan      Plan     @default(FREE)
+  credits   Int      @default(100)
+  createdAt DateTime @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id              String        @id @default(cuid())
+  title           String
+  episodeCount    Int           @default(1)
+  language        String        @default("zh")
+  status          ProjectStatus @default(DRAFT)
+  pipelineStage   PipelineStage @default(IDLE)
+  userId          String
+  rawScript       String        @db.Text
+  modelConfig     Json?
+  totalCost       Decimal       @default(0) @db.Decimal(10, 4)
+  finalVideoUrl   String?
+  /// Per-episode masters JSON: [{ episodeNumber, videoUrl, durationSec }, ...]
+  episodeFinals   Json?
+  thumbnailUrl    String?
+  duration        Int? // seconds — sum of episode masters when episodeFinals is set
+  errorMessage    String?       @db.Text
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  volcengineAssetGroupId String? // 火山引擎资产组 ID
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenes     Scene[]
+  characters Character[]
+  jobs       Job[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model Scene {
+  id         String  @id @default(cuid())
+  projectId  String
+  episodeNumber Int     @default(1)
+  order      Int
+  location   String // e.g. "EXT. ANCIENT FOREST"
+  timeOfDay  String? // e.g. "DUSK"
+  scriptText String  @db.Text
+  audioUrl   String? // composed scene audio
+  duration   Float?  @db.DoublePrecision
+  refImageUrl String? // 场景参考图 (用于资产库)
+  
+  volcengineAssetId String?
+  volcengineStatus  String?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  shots   Shot[]
+  props   Prop[]
+
+  @@unique([projectId, episodeNumber, order])
+}
+
+model Character {
+  id          String  @id @default(cuid())
+  projectId   String
+  name        String // e.g. "KAEL"
+  description String? @db.Text
+  personality String? @db.Text
+  background  String? @db.Text
+  visualPrompt String? @db.Text
+  refImageUrl String? // consistency anchor
+  voiceId     String? // ElevenLabs voice id
+
+  volcengineAssetId String?      // 火山资产 ID
+  volcengineStatus  String?      // Processing, Active, Failed
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  shotsAppearing ShotCharacter[]
+
+  @@unique([projectId, name])
+}
+
+model Prop {
+  id      String @id @default(cuid())
+  sceneId String
+  name    String
+  refImageUrl String? // 道具参考图
+
+  volcengineAssetId String?      // 火山资产 ID
+  volcengineStatus  String?      
+
+  scene Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+}
+
+model Shot {
+  id          String     @id @default(cuid())
+  sceneId     String
+  order       Int
+  type        ShotType
+  cameraMove  String? // PUSH_IN / DOLLY / STATIC
+  prompt      String     @db.Text
+  imagePrompt String?    @db.Text
+  videoPrompt String?    @db.Text
+  duration    Int        @default(4)
+  imageUrl    String?    // generated keyframe
+  videoUrl    String?    // generated motion
+  status      ShotStatus @default(PENDING)
+
+  volcengineAssetId String?      // 针对该分镜生成的资产 ID
+  volcengineStatus  String?      
+  retryCount  Int        @default(0)
+  errorMsg    String?    @db.Text
+  cost        Decimal    @default(0) @db.Decimal(10, 4)
+
+  scene      Scene           @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  characters ShotCharacter[]
+
+  @@unique([sceneId, order])
+  @@index([status])
+}
+
+model ShotCharacter {
+  shotId      String
+  characterId String
+
+  shot      Shot      @relation(fields: [shotId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([shotId, characterId])
+}
+
+model Job {
+  id         String    @id // BullMQ jobId
+  projectId  String
+  queueName  String
+  status     JobStatus
+  progress   Int       @default(0)
+  payload    Json
+  result     Json?
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+}
+
+// ============ Enums ============
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PipelineStage {
+  IDLE
+  PARSING
+  STORYBOARDING
+  ASSET_GENERATION
+  AUDIO
+  COMPOSING
+  DONE
+}
+
+enum ShotStatus {
+  PENDING
+  GENERATING_IMAGE
+  IMAGE_READY
+  GENERATING_VIDEO
+  READY
+  FAILED
+}
+
+enum ShotType {
+  WIDE
+  MEDIUM
+  CLOSE_UP
+  OTS
+  INSERT
+  ESTABLISHING
+  POV
+}
+
+enum JobStatus {
+  QUEUED
+  ACTIVE
+  COMPLETED
+  FAILED
+  RETRYING
+}

@@ -1,0 +1,21 @@
+node_modules/
+.next/
+.turbo/
+out/
+build/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.idea/
+.vscode/
+.local-assets/
+prisma/dev.db
+coverage/
+.pnpm-store/
+
+# 生产部署 — 本地数据目录
+assets/
+data/

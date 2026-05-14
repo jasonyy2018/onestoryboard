@@ -35,25 +35,40 @@ function dedupeUrls(urls: string[]): string[] {
 }
 
 /**
- * Part 1 参考图顺序（OG 上限 3 张）：
- * 角色（最多 2 张，人物一致性最重要）→ 场景（环境锚点）→ 道具（补充剩余槽位）
- * 这些资产在故事板生图阶段消费，生成的故事板图再作为 Part 2 的唯一参考。
+ * Part 1 参考图选取（腾讯 OG 上限 3 张）：
+ * - 只选该镜头实际出镜的角色（来自 charactersInShot 关联），最多 2 张
+ * - 场景参考图 1 张
+ * - 若角色不足 2 张，用道具图补充剩余槽位（优先选 imagePrompt 里提到名字的道具）
  */
 function keyframeRefUrls(shot: {
-  scene: { refImageUrl: string | null; props: { refImageUrl: string | null }[] };
+  imagePrompt?: string | null;
+  scene: { refImageUrl: string | null; props: { name: string; refImageUrl: string | null }[] };
   characters: { character: { refImageUrl: string | null } }[];
 }): string[] {
   const urls: string[] = [];
-  // 1. Characters — most important for identity consistency
+
+  // 1. 出镜角色（最多 2 张）
   for (const sc of shot.characters) {
     if (sc.character.refImageUrl && urls.length < 2) urls.push(sc.character.refImageUrl);
   }
-  // 2. Scene — environment anchor
+
+  // 2. 场景参考图（1 张）
   if (shot.scene.refImageUrl && urls.length < 3) urls.push(shot.scene.refImageUrl);
-  // 3. Props — fill remaining slot if any
-  for (const p of shot.scene.props) {
-    if (p.refImageUrl && urls.length < 3) urls.push(p.refImageUrl);
+
+  // 3. 道具：优先选 imagePrompt 里提到名字的，填满剩余槽位
+  if (urls.length < 3 && shot.scene.props.length > 0) {
+    const promptText = (shot.imagePrompt ?? "").toLowerCase();
+    // 先按情节相关性排序：在 prompt 里出现名字的道具优先
+    const sorted = [...shot.scene.props].sort((a, b) => {
+      const aMatch = promptText.includes(a.name.toLowerCase()) ? 0 : 1;
+      const bMatch = promptText.includes(b.name.toLowerCase()) ? 0 : 1;
+      return aMatch - bMatch;
+    });
+    for (const p of sorted) {
+      if (p.refImageUrl && urls.length < 3) urls.push(p.refImageUrl);
+    }
   }
+
   return dedupeUrls(urls);
 }
 

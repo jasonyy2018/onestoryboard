@@ -18,21 +18,19 @@ RUN pnpm prisma generate
 RUN pnpm build
 
 # ---------- app (Next.js standalone) ----------
-FROM base AS app
+FROM node:22-alpine AS app
 ENV NODE_ENV=production
 RUN apk add --no-cache ffmpeg wget
 WORKDIR /app
 
-COPY --from=builder /app/public ./public
+# standalone 产物已包含运行所需的 node_modules（含 .prisma 客户端）
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-# 提示词模板（可通过 docker-compose volume 覆盖）
 COPY --from=builder /app/prompts ./prompts
 
-# 本地资产目录（生产用 volume 挂载）
+# 本地资产目录（由 docker-compose volume 挂载）
 RUN mkdir -p .local-assets
 
 # 启动时自动运行数据库迁移，再启动应用
@@ -47,7 +45,7 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
 
 # ---------- worker (BullMQ) ----------
-FROM base AS worker
+FROM node:22-alpine AS worker
 ENV NODE_ENV=production
 RUN apk add --no-cache ffmpeg
 WORKDIR /app

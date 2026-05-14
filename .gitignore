@@ -18,5 +18,5 @@ coverage/
 scratch/
 
 # 生产部署 — 本地数据目录
-assets/
-data/
+/assets/
+/data/

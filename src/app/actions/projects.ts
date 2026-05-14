@@ -28,11 +28,11 @@ export async function createProject(formData: FormData) {
   // Single-user production mode: upsert a shared system user.
   // Replace with real auth session lookup when multi-user auth is added.
   const user = await db.user.upsert({
-    where: { email: "system@naohaiyi.local" },
+    where: { email: "system@onestoryboard.local" },
     update: {},
     create: {
       id: DEMO_USER_ID,
-      email: "system@naohaiyi.local",
+      email: "system@onestoryboard.local",
       name: "System",
       plan: "PRO",
       credits: 999999,

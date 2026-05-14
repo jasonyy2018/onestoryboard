@@ -1,4 +1,4 @@
-// Prisma schema · Naohaiyi
+// Prisma schema · Onestoryboard
 // Docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -39,13 +39,13 @@ model Project {
   /// Per-episode masters JSON: [{ episodeNumber, videoUrl, durationSec }, ...]
   episodeFinals   Json?
   thumbnailUrl    String?
-  duration        Int? // seconds — sum of episode masters when episodeFinals is set
+  duration        Int? // seconds �?sum of episode masters when episodeFinals is set
   errorMessage    String?       @db.Text
   startedAt       DateTime?
   completedAt     DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  volcengineAssetGroupId String? // 火山引擎资产组 ID
+  volcengineAssetGroupId String? // 火山引擎资产�?ID
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   scenes     Scene[]
@@ -66,7 +66,7 @@ model Scene {
   scriptText String  @db.Text
   audioUrl   String? // composed scene audio
   duration   Float?  @db.DoublePrecision
-  refImageUrl String? // 场景参考图 (用于资产库)
+  refImageUrl String? // 场景参考图 (用于资产�?
   
   volcengineAssetId String?
   volcengineStatus  String?

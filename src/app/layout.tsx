@@ -5,7 +5,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 export const metadata: Metadata = {
-  title: "Naohaiyi · AI Video Studio",
+  title: "Onestoryboard · AI Video Studio",
   description: "Turn your script into a fully generated video.",
 };
 

@@ -9,7 +9,7 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/naohaiyi?schema=public
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/onestoryboard?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     depends_on:
       db: { condition: service_healthy }
@@ -35,7 +35,7 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/naohaiyi?schema=public
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/onestoryboard?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     deploy:
       replicas: 2
@@ -52,7 +52,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: naohaiyi
+      POSTGRES_DB: onestoryboard
     expose:
       - "5432"
     volumes:
@@ -60,7 +60,7 @@ services:
       - ./data/postgres:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d naohaiyi"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onestoryboard"]
       interval: 5s
       timeout: 5s
       retries: 10

@@ -22,7 +22,7 @@ export interface ComposerResult {
  * Stitch ordered shot videos into a single MP4 (no separate narration track; clip audio follows each shot).
  */
 export async function composeFinalVideo(input: ComposerInput): Promise<ComposerResult> {
-  const workDir = await mkdtemp(join(tmpdir(), "naohaiyi-"));
+  const workDir = await mkdtemp(join(tmpdir(), "onestoryboard-"));
   try {
     // 1) download all shot clips
     const localPaths: string[] = [];

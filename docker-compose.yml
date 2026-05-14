@@ -20,27 +20,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
-    volumes:
-      - ./assets:/app/.local-assets
-      - ./prompts:/app/prompts:ro
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-    env_file: .env
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/onestoryboard?schema=public
-      REDIS_URL: redis://redis:6379
-    deploy:
-      replicas: 2
-    depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_healthy }
-    restart: unless-stopped
+      start_period: 40s
     volumes:
       - ./assets:/app/.local-assets
       - ./prompts:/app/prompts:ro

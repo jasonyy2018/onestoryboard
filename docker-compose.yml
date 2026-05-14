@@ -15,7 +15,7 @@ services:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/onestoryboard?schema=public
       REDIS_URL: redis://redis:6379
       # worker 运行时读此变量生成本地资产的公网 URL，必须是外网可访问的域名
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://test.togomol.com}
+      NEXT_PUBLIC_APP_URL: https://test.togomol.com
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }

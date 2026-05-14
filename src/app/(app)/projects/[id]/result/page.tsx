@@ -108,14 +108,9 @@ export default async function ResultPage({
         <button type="button" className="inline-flex h-8 items-center gap-1.5 rounded border border-border-subtle px-3 text-xs">
           <RefreshCw className="h-3 w-3 text-fg-muted" /> {ui.result.rerender}
         </button>
-        {(project.finalVideoUrl && (!episodeMasters || episodeMasters.length <= 1)) ||
-        (episodeMasters && episodeMasters.length > 1) ? (
+        {project.finalVideoUrl && (!episodeMasters || episodeMasters.length <= 1) ? (
           <a
-            href={
-              episodeMasters && episodeMasters.length > 1
-                ? episodeMasters[0]!.videoUrl
-                : project.finalVideoUrl!
-            }
+            href={project.finalVideoUrl}
             download
             className="inline-flex h-8 items-center gap-1.5 rounded bg-accent-purple px-3.5 text-xs font-medium text-white"
           >

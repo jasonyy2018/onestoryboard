@@ -60,14 +60,21 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
+  const contentType = contentTypeForKey(resolved.key);
+  const filename = path.basename(resolved.key);
+  const isDownloadable = contentType === "video/mp4" || contentType === "video/webm";
+
   const stream = createReadStream(resolved.fullPath);
   const webStream = Readable.toWeb(stream) as ReadableStream;
 
   return new NextResponse(webStream, {
     status: 200,
     headers: {
-      "Content-Type": contentTypeForKey(resolved.key),
+      "Content-Type": contentType,
       "Cache-Control": "public, max-age=3600",
+      ...(isDownloadable
+        ? { "Content-Disposition": `attachment; filename="${filename}"` }
+        : {}),
     },
   });
 }

@@ -83,7 +83,7 @@ async function pollTask<T>(args: {
   maxRetries?: number;
   intervalMs?: number;
 }): Promise<string> {
-  const { taskId, pollFn, job, stage, maxRetries = 60, intervalMs = 5000 } = args;
+  const { taskId, pollFn, job, stage, maxRetries = 180, intervalMs = 5000 } = args;
 
   for (let i = 0; i < maxRetries; i++) {
     await job.log(`Polling ${stage} task ${taskId} (attempt ${i + 1})...`);

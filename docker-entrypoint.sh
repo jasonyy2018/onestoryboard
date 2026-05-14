@@ -19,7 +19,7 @@ done
 echo "[entrypoint] Schema ready."
 
 echo "[entrypoint] Starting Next.js app..."
-node server.js &
+HOSTNAME=0.0.0.0 node server.js &
 APP_PID=$!
 
 echo "[entrypoint] Starting BullMQ worker..."

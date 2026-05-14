@@ -53,7 +53,7 @@ export async function createProject(formData: FormData) {
         textModel: "doubao-seed-2-0",
         imageModel: "tencent-og-medium",
         storyboardImageModel: "tencent-og-medium",
-        videoModel: "seedance-2.0-pro",
+        videoModel: "seedance-2.0-fast",
         aspectRatio: "9:16",
         resolution: "1080p",
       },

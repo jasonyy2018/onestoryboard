@@ -12,6 +12,8 @@ RUN pnpm install --frozen-lockfile
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# 构建阶段跳过环境变量验证（运行时由 docker-compose 注入真实值）
+ENV SKIP_ENV_VALIDATION=1
 RUN pnpm prisma generate
 RUN pnpm build
 

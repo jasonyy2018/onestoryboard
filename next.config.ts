@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // 关闭 Next.js 匿名遥测
+  env: {},
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
   },

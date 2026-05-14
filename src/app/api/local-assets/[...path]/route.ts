@@ -25,7 +25,7 @@ function resolveUnderLocalRoot(segments: string[]): { fullPath: string; key: str
   if (!env.LOCAL_ASSETS_DIR || segments.length === 0) return null;
   const root = path.isAbsolute(env.LOCAL_ASSETS_DIR)
     ? path.resolve(env.LOCAL_ASSETS_DIR)
-    : path.resolve(process.cwd(), env.LOCAL_ASSETS_DIR);
+    : path.resolve(/* turbopackIgnore: true */ process.cwd(), env.LOCAL_ASSETS_DIR);
   const decoded = segments.map((s) => {
     try {
       return decodeURIComponent(s);

@@ -239,69 +239,21 @@ export const shotWorker = new Worker(
       (shot.videoPrompt && shot.videoPrompt.trim()) || shot.prompt || shot.imagePrompt;
 
     const elcineLine = isZh
-      ? `【EL.CINE · 出片】参考图为 reference_image（约束风格与构图，非首帧锁定），视频内容完全由下方时间码脚本驱动，约 ${shot.duration ?? 15} 秒。`
-      : `[EL.CINE · Render] Reference image is passed as reference_image (style/composition guide, NOT first-frame lock). Video is fully driven by the timestamped script below (~${shot.duration ?? 15}s).`;
+      ? `【EL.CINE · 出片】参考图为 reference_image（约束风格与构图，非首帧锁定），视频内容完全由下方脚本驱动，约 ${shot.duration ?? 15} 秒。`
+      : `[EL.CINE · Render] Reference image is passed as reference_image (style/composition guide, NOT first-frame lock). Video is fully driven by the script below (~${shot.duration ?? 15}s).`;
 
     const deliverableLock = isZh
       ? `【成片约束】纯叙事实拍，连贯时空；参考图仅作风格参考，不得复刻原图。禁止出现分镜格线、九宫格框、制作板水印等制作素材。`
       : `[Deliverable lock] In-world photoreal footage, continuous time/space. Reference image guides style only — do not reproduce it literally. No grid lines, board watermarks, or PiP artifacts.`;
 
-    // 把 videoPrompt 的运动描述包装为简报要求的时间码格式（5段×3秒=15秒）
-    const duration = shot.duration ?? 15;
-    const segSec = Math.floor(duration / 5);
-
-    function buildTimeline(motionText: string, zh: boolean): string {
-      // 提取 videoPrompt 里的 [SHOT SEQUENCE] 段作为动作核心
-      const seqMatch = motionText.match(/\[SHOT SEQUENCE\]([\s\S]*?)(?=\*\*\[|$)/i);
-      const camMatch = motionText.match(/\[CAMERA LANGUAGE\]([\s\S]*?)(?=\*\*\[|$)/i);
-      const seqText = seqMatch?.[1]?.trim() ?? motionText.slice(0, 200);
-      const camText = camMatch?.[1]?.trim() ?? (shot.cameraMove || "");
-
-      const shotType = shot.type; // WIDE / MEDIUM / CLOSE_UP etc.
-      const loc = shot.scene.location;
-
-      if (zh) {
-        return `# 场景语境：
-${loc}${shot.scene.timeOfDay ? " · " + shot.scene.timeOfDay : ""}
-
-# 旁白：
-${narrativePrompt || "（第三人称叙事）"}
-
-# 动作与运镜序列（${duration}秒时间轴）：
-- 00:00–00:0${segSec}：[${shotType}] 建立情境，${seqText.split(/[。\n]/)[0] || "镜头缓慢推进"}。
-- 00:0${segSec}–00:${String(segSec * 2).padStart(2, "0")}：[运镜] ${camText.split(/[，,\n]/)[0] || "跟拍主体进入画面"}。
-- 00:${String(segSec * 2).padStart(2, "0")}–00:${String(segSec * 3).padStart(2, "0")}：[主体动作] ${seqText.split(/[。\n]/)[1] || "情绪升温，主体表演"}。
-- 00:${String(segSec * 3).padStart(2, "0")}–00:${String(segSec * 4).padStart(2, "0")}：[情绪推进] ${seqText.split(/[。\n]/)[2] || "镜头随情绪收紧或放开"}。
-- 00:${String(segSec * 4).padStart(2, "0")}–00:${String(duration).padStart(2, "0")}：[收尾] 情绪落点或悬念钩，定格或横移收尾。
-
-# 技术细节：
-物理模拟：逼真的火焰、布料随风飘动、烟尘粒子。
-镜头运动：${camText || "平滑推拉，35mm 变形宽银幕，浅景深"}。
-色彩分级：依据场景情绪，高对比度，粗砺质感，低饱和度。`;
-      } else {
-        return `# Scene context:
-${loc}${shot.scene.timeOfDay ? " · " + shot.scene.timeOfDay : ""}
-
-# Narration:
-${narrativePrompt || "(third-person cinematic)"}
-
-# Motion & camera sequence (${duration}s timeline):
-- 00:00–00:0${segSec}: [${shotType}] Establish — ${seqText.split(/[.\n]/)[0] || "slow push into scene"}.
-- 00:0${segSec}–00:${String(segSec * 2).padStart(2, "0")}: [Camera] ${camText.split(/[,\n]/)[0] || "tracking subject entry"}.
-- 00:${String(segSec * 2).padStart(2, "0")}–00:${String(segSec * 3).padStart(2, "0")}: [Action] ${seqText.split(/[.\n]/)[1] || "main action and emotion build"}.
-- 00:${String(segSec * 3).padStart(2, "0")}–00:${String(segSec * 4).padStart(2, "0")}: [Escalate] ${seqText.split(/[.\n]/)[2] || "emotional peak or reversal"}.
-- 00:${String(segSec * 4).padStart(2, "0")}–00:${String(duration).padStart(2, "0")}: [Close] Emotional resolution or suspense hook — hold or lateral track out.
-
-# Technical details:
-Physics: realistic fire, cloth dynamics in wind, smoke/ash particles.
-Camera: ${camText || "smooth push-pull, 35mm anamorphic, shallow DOF"}.
-Color grading: scene-derived, high contrast, gritty texture, desaturated.`;
-      }
-    }
+    // Part 2 时间轴脚本：直接使用 EL.CINE 生成的完整 videoPrompt，
+    // 保持与 Part 1 故事板图的 12 格节拍严格对应，不做二次切割重组。
+    const loc = shot.scene.location;
+    const timeOfDay = shot.scene.timeOfDay ? (isZh ? ` · ${shot.scene.timeOfDay}` : ` · ${shot.scene.timeOfDay}`) : "";
 
     const rowScriptCore = isZh
-      ? `${elcineLine}\n${deliverableLock}\n\n${buildTimeline(motionFromTable || "", true)}\n\n【角色】${charactersPrompt}`
-      : `${elcineLine}\n${deliverableLock}\n\n${buildTimeline(motionFromTable || "", false)}\n\n[Cast] ${charactersPrompt}`;
+      ? `${elcineLine}\n${deliverableLock}\n\n# 场景语境：\n${loc}${timeOfDay}\n\n# 旁白：\n${narrativePrompt || "（第三人称叙事）"}\n\n# 视频脚本（与故事板图 12 格节拍严格对应）：\n${motionFromTable}\n\n# 技术细节：\n物理模拟：逼真的火焰、布料随风飘动、烟尘粒子。\n镜头运动：${shot.cameraMove || "平滑推拉，35mm 变形宽银幕，浅景深"}。\n色彩分级：依据场景情绪，高对比度，粗砺质感，低饱和度。\n\n【角色】${charactersPrompt}`
+      : `${elcineLine}\n${deliverableLock}\n\n# Scene context:\n${loc}${timeOfDay}\n\n# Narration:\n${narrativePrompt || "(third-person cinematic)"}\n\n# Video script (strictly aligned to storyboard 12-panel beat order):\n${motionFromTable}\n\n# Technical details:\nPhysics: realistic fire, cloth dynamics in wind, smoke/ash particles.\nCamera: ${shot.cameraMove || "smooth push-pull, 35mm anamorphic, shallow DOF"}.\nColor grading: scene-derived, high contrast, gritty texture, desaturated.\n\n[Cast] ${charactersPrompt}`;
 
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);

@@ -68,8 +68,8 @@ Each of \`imagePrompt\` and \`videoPrompt\` MUST be one multi-line string using 
 - Prefer single clear subject in frame except wide establishing shots.
 - **duration MUST be the integer 15 for every shot** (each row = one 15s clip).
 - **Shot count per scene**: You will be given a targetShotsForThisScene hint. Aim to produce exactly that many shots for this scene. Do not go significantly over or under — the total across all scenes must sum to the episode target (typically 8 shots = 2 minutes per episode).
-- imagePrompt: MUST follow **Mandatory tag layout** above (still keyframe: blocking, lens, light, micro-performance inside the tagged sections).
-- videoPrompt: MUST follow the same header list in the same order; content is motion/time-based for ~15s and must chain after the previous row.
+- imagePrompt: MUST follow **Mandatory tag layout** above (still keyframe: blocking, lens, light, micro-performance inside the tagged sections). The **[SHOT SEQUENCE]** section must describe the 12-panel beat structure of the storyboard sheet (panels 1–3 establish, 4–6 advance, 7–9 escalate, 10–12 resolve) so the image model can lay them out in order.
+- videoPrompt: MUST follow the same header list in the same order; content is motion/time-based for ~15s and must chain after the previous row. **CRITICAL — [SHOT SEQUENCE] must use 5 explicit timestamp segments aligned to the 12 panels of the storyboard image**: "00:00-00:03 / 00:03-00:06 / 00:06-00:09 / 00:09-00:12 / 00:12-00:15", each segment describing the camera move and subject action for that 3-second window in the same narrative order as the storyboard panels. This is the direct input to the video model and must match the panel sequence exactly.
 - type: one of WIDE | MEDIUM | CLOSE_UP | OTS | INSERT | ESTABLISHING | POV.
 - cameraMove: short label or null.
 - charactersInShot: array of character names EXACTLY as given (no @ prefix in JSON).
@@ -148,8 +148,8 @@ const STORYBOARD_SYSTEM_ZH = `你是真人写实短剧的 AI 导演。
 - 除广角建立镜头外，优先单主体清晰呈现。
 - 每条 **duration 必须为整数 15**。
 - **本场镜数目标**：调用方会给出 targetShotsForThisScene 提示，请尽量输出恰好该数量的镜头。全集所有场次的镜数之和须等于集目标（通常 8 镜 = 2 分钟/集），不得大幅超出或不足。
-- imagePrompt：必须按上文「强制标签版式」十段依次撰写（静帧/表图；微表演、镜头、光线写在对应段内）。
-- videoPrompt：同样十段、同样顺序；各段写该镜约 15 秒的运动与时间推进，不得写成无标长散文。
+- imagePrompt：必须按上文「强制标签版式」十段依次撰写（静帧/表图；微表演、镜头、光线写在对应段内）。其中 **[SHOT SEQUENCE]** 必须描述分镜表图的 12 格节拍结构（格1–3建立，4–6推进，7–9升级，10–12落点），以便生图模型按顺序排布各格画面。
+- videoPrompt：同样十段、同样顺序。**关键——[SHOT SEQUENCE] 必须使用与故事板图 12 格节拍严格对应的 5 段时间码**："00:00-00:03 / 00:03-00:06 / 00:06-00:09 / 00:09-00:12 / 00:12-00:15"，每段描述该 3 秒窗口内的运镜方式与主体动作，叙事顺序须与分镜表各格完全一致。这是直接输入视频模型的脚本，必须与故事板图格序一一对应。
 - type 取值：WIDE | MEDIUM | CLOSE_UP | OTS | INSERT | ESTABLISHING | POV。
 - cameraMove：简短标签或 null。
 - charactersInShot：姓名数组，与给定完全一致（JSON 中不要带 @ 前缀）。

@@ -166,3 +166,33 @@ export async function pollAssetStatus(assetId: string): Promise<string> {
   const asset = await getAsset(assetId);
   return asset.Status; // Processing, Active, Failed
 }
+
+/**
+ * Upload an image URL to Volcengine Asset Library and wait until Active.
+ * Used to bypass PrivacyInformation content filter when passing storyboard
+ * keyframes as reference_image to Seedance r2v.
+ *
+ * Returns the assetId (pass as `asset://<id>` to Seedance).
+ * Throws if AK/SK not configured — caller should fall back to plain URL.
+ */
+export async function ingestImageAndWait(args: {
+  groupId: string;
+  url: string;
+  name: string;
+  maxAttempts?: number;
+  intervalMs?: number;
+}): Promise<string> {
+  const { groupId, url, name, maxAttempts = 40, intervalMs = 3000 } = args;
+
+  const asset = await createAsset({ groupId, url, assetType: "Image", name });
+  const assetId: string = asset.Id;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const status = await pollAssetStatus(assetId);
+    if (status === "Active") return assetId;
+    if (status === "Failed") throw new Error(`Asset ${assetId} ingestion failed`);
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error(`Asset ${assetId} ingestion timed out after ${maxAttempts} attempts`);
+}

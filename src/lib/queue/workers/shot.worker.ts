@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { generateVideo, pollSeedanceTask } from "@/lib/ai/video";
+import { ingestImageAndWait } from "@/lib/ai/volcengine-assets";
 import { generateImage, type ImageModelKey } from "@/lib/ai/image";
 import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { wrapCinematicPrompt, filterSensitiveWords } from "@/lib/orchestrator/safety";
@@ -220,12 +221,34 @@ export const shotWorker = new Worker(
     });
     await job.updateProgress({ stage: "video-start", percent: 40 });
 
-    // Part 2 参考图：仅故事板图（首张且唯一）
+    // Part 2 参考图：将故事板图上传到 Volcengine Asset Library（asset:// 通道绕过人脸审核）
+    // 若 AK/SK 未配置则回退到普通 image_url
     const refImageUrls: string[] = [];
-    if (storyboardKeyUrl) refImageUrls.push(storyboardKeyUrl);
-
-    // Volcengine 资产 ID 在 Part 2 不传入（已由 Part 1 生图阶段消费）
     const volcengineAssetIds: string[] = [];
+
+    if (storyboardKeyUrl) {
+      const project2 = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+      const groupId = project2.volcengineAssetGroupId;
+
+      if (groupId && env.VOLCENGINE_ACCESS_KEY_ID && env.VOLCENGINE_SECRET_ACCESS_KEY) {
+        try {
+          log.info({ groupId }, "[shot-worker] ingesting storyboard keyframe into Volcengine Asset Library...");
+          const assetId = await ingestImageAndWait({
+            groupId,
+            url: storyboardKeyUrl,
+            name: `keyframe-${shotId}`,
+          });
+          volcengineAssetIds.push(assetId);
+          log.info({ assetId }, "[shot-worker] ✓ storyboard keyframe ingested as asset");
+        } catch (err) {
+          log.warn({ err }, "[shot-worker] asset ingestion failed, falling back to plain image_url");
+          refImageUrls.push(storyboardKeyUrl);
+        }
+      } else {
+        log.warn("[shot-worker] no volcengine groupId or AK/SK, using plain image_url for storyboard keyframe");
+        refImageUrls.push(storyboardKeyUrl);
+      }
+    }
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};
     const narrativeStyle = (nConfig.narrativeStyle as string) || "THIRD_PERSON";

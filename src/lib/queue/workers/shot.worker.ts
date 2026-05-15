@@ -228,6 +228,8 @@ export const shotWorker = new Worker(
     const volcengineAssetIds: string[] = [];
 
     // 收集该镜头出镜角色中已审核通过（Active）的 asset ID，最多取 2 个
+    // 注意：若 asset 在火山引擎侧不存在（CreateAsset 曾超时），会报 InvalidParameter not found
+    // 此时视频生成不传参考图，降级为纯文字驱动
     for (const sc of shot.characters) {
       const c = sc.character;
       if (
@@ -239,10 +241,11 @@ export const shotWorker = new Worker(
       }
     }
 
-    log.info(
-      { assetIds: volcengineAssetIds.length, chars: shot.characters.length },
-      "[shot-worker] Part2 reference: volcengine asset IDs",
-    );
+    if (volcengineAssetIds.length === 0) {
+      log.warn("[shot-worker] no Active volcengine asset IDs for this shot — generating without reference image");
+    } else {
+      log.info({ assetIds: volcengineAssetIds }, "[shot-worker] Part2 reference: volcengine asset IDs");
+    }
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};
     const narrativeStyle = (nConfig.narrativeStyle as string) || "THIRD_PERSON";

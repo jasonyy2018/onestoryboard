@@ -116,8 +116,26 @@ export async function pollSeedanceTask(taskId: string): Promise<{ url: string; s
 }
 
 export async function generateVideo(input: VideoGenInput): Promise<VideoGenResult> {
-  return withRetry(
-    () => createSeedanceTask(input),
-    { context: "video:seedance-2.0-fast", retries: 2, minTimeout: 3000 },
-  );
+  try {
+    return await withRetry(
+      () => createSeedanceTask(input),
+      { context: "video:seedance-2.0-fast", retries: 2, minTimeout: 3000 },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // asset not found 或 人脸审核拦截 → 去掉参考图降级重试一次
+    const isRefImageError =
+      msg.includes("is not found") ||
+      msg.includes("InputImageSensitiveContentDetected") ||
+      msg.includes("PrivacyInformation");
+
+    if (isRefImageError && (input.volcengineAssetIds?.length || input.refImageUrls?.length)) {
+      console.warn("[video] reference image error, retrying without reference images:", msg.slice(0, 120));
+      return withRetry(
+        () => createSeedanceTask({ ...input, volcengineAssetIds: [], refImageUrls: [] }),
+        { context: "video:seedance-2.0-fast:no-ref", retries: 2, minTimeout: 3000 },
+      );
+    }
+    throw err;
+  }
 }

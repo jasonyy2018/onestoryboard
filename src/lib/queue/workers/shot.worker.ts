@@ -220,21 +220,22 @@ export const shotWorker = new Worker(
     });
     await job.updateProgress({ stage: "video-start", percent: 40 });
 
-    // Part 2 参考图：把故事板图读取后转 base64 直接内嵌传给 Seedance。
-    // 避免依赖 Volcengine Asset Library（不稳定）或要求 Seedance 回来拉外网 URL（可能超时/人脸拦截）。
+    // Part 2 参考图：暂时禁用（等待火山引擎 r2v 人脸报白审批通过后再启用）。
+    // 报白通过后：把故事板图转 base64 内嵌传入，绕开外网回拉 URL 的问题。
+    // TODO: 报白通过后取消注释以下代码块并删除此注释。
+    // if (storyboardKeyUrl) {
+    //   try {
+    //     const imgBuf = await fetchAsBuffer(storyboardKeyUrl);
+    //     const b64 = "data:image/jpeg;base64," + imgBuf.toString("base64");
+    //     refImageUrls.push(b64);
+    //     log.info({ bytes: imgBuf.length }, "[shot-worker] ✓ storyboard keyframe as base64 ref");
+    //   } catch (err) {
+    //     log.warn({ err }, "[shot-worker] base64 conversion failed, skipping reference image");
+    //   }
+    // }
     const refImageUrls: string[] = [];
     const volcengineAssetIds: string[] = [];
-
-    if (storyboardKeyUrl) {
-      try {
-        const imgBuf = await fetchAsBuffer(storyboardKeyUrl);
-        const b64 = "data:image/jpeg;base64," + imgBuf.toString("base64");
-        refImageUrls.push(b64);
-        log.info({ bytes: imgBuf.length }, "[shot-worker] ✓ storyboard keyframe converted to base64");
-      } catch (err) {
-        log.warn({ err, url: storyboardKeyUrl }, "[shot-worker] base64 conversion failed, skipping reference image");
-      }
-    }
+    log.info("[shot-worker] reference image disabled — pending r2v privacy whitelist approval");
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};
     const narrativeStyle = (nConfig.narrativeStyle as string) || "THIRD_PERSON";

@@ -46,10 +46,10 @@ export const env = createEnv({
     VOLCENGINE_SECRET_ACCESS_KEY: z.string().optional(),
     DOUBAO_ENDPOINT_ID: z.string().optional(),
 
-    // Defaults — locked: doubao text, tencent-og-medium image, seedance-2.0 video
+    // Defaults — locked: doubao text, tencent-og-medium image, seedance-2.0-fast video
     DEFAULT_TEXT_MODEL: z.string().default("doubao-seed-2-0"),
     DEFAULT_IMAGE_MODEL: z.string().default("tencent-og-medium"),
-    DEFAULT_VIDEO_MODEL: z.string().default("seedance-2.0"),
+    DEFAULT_VIDEO_MODEL: z.string().default("seedance-2.0-fast"),
 
     // Worker tuning — both image and video pipelines default to 5 parallel tasks.
     /** BullMQ shot worker concurrency: how many shots (image→video) run in parallel. */

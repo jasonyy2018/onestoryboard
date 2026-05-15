@@ -4,7 +4,7 @@ import { createBullConnection } from "@/lib/queue/connection";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { generateVideo, pollSeedanceTask, type VideoModelKey } from "@/lib/ai/video";
+import { generateVideo, pollSeedanceTask } from "@/lib/ai/video";
 import { generateImage, type ImageModelKey } from "@/lib/ai/image";
 import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { wrapCinematicPrompt, filterSensitiveWords } from "@/lib/orchestrator/safety";
@@ -266,15 +266,9 @@ export const shotWorker = new Worker(
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);
 
-    const rawVideo =
-      (config.videoModel as string | undefined) ??
-      (config.video as string | undefined) ??
-      env.DEFAULT_VIDEO_MODEL;
-    const videoModelKey = rawVideo as VideoModelKey;
-
     const refForVideo = dedupeUrls(refImageUrls).slice(0, SEEDANCE_MAX_REFERENCE_IMAGES);
     log.info(
-      { videoModel: videoModelKey, refImages: refForVideo.length, duration: shot.duration },
+      { model: "seedance-2.0-fast", refImages: refForVideo.length, duration: shot.duration },
       "[shot-worker] ⬜ Part2 video generating...",
     );
     const videoRes = await generateVideo(
@@ -289,7 +283,6 @@ export const shotWorker = new Worker(
         locale: shot.scene.project.language,
         generateAudio: true,
       },
-      videoModelKey,
     );
 
     let videoUrl = videoRes.url;

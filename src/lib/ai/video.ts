@@ -20,30 +20,19 @@ export interface VideoGenResult {
   taskId?: string;
 }
 
-export type VideoModelKey =
-  | "seedance-2.0"
-  | "seedance-2.0-pro"
-  | "seedance-2.0-fast";
+export type VideoModelKey = "seedance-2.0-fast";
 
 const COST_PER_SECOND: Record<VideoModelKey, number> = {
-  "seedance-2.0": 0.15,
-  "seedance-2.0-pro": 0.18,
   "seedance-2.0-fast": 0.08,
 };
 
-async function createSeedanceTask(
-  input: VideoGenInput,
-  modelId: "doubao-seedance-2-0-260128" | "doubao-seedance-2-0-fast-260128",
-): Promise<VideoGenResult> {
+const MODEL_ID = "doubao-seedance-2-0-fast-260128";
+
+async function createSeedanceTask(input: VideoGenInput): Promise<VideoGenResult> {
   const apiKey = env.VOLCENGINE_ARK_API_KEY;
   if (!apiKey) throw new Error("VOLCENGINE_ARK_API_KEY is not configured");
 
   const duration = Math.min(Math.max(input.duration ?? 8, 4), 30);
-  const modelKey: VideoModelKey = modelId.includes("fast")
-    ? "seedance-2.0-fast"
-    : modelId.includes("pro")
-    ? "seedance-2.0-pro"
-    : "seedance-2.0";
 
   const content: object[] = [];
 
@@ -62,7 +51,7 @@ async function createSeedanceTask(
   }
 
   const body = {
-    model: modelId,
+    model: MODEL_ID,
     content,
     generate_audio: input.generateAudio ?? true,
     ratio: input.ratio ?? "16:9",
@@ -95,8 +84,8 @@ async function createSeedanceTask(
 
   return {
     url: "",
-    cost: duration * COST_PER_SECOND[modelKey],
-    model: modelKey,
+    cost: duration * COST_PER_SECOND["seedance-2.0-fast"],
+    model: "seedance-2.0-fast",
     taskId: data.id,
   };
 }
@@ -128,25 +117,9 @@ export async function pollSeedanceTask(taskId: string): Promise<{ url: string; s
   return { url, status };
 }
 
-export async function generateVideo(
-  input: VideoGenInput,
-  modelKey: VideoModelKey = (env.DEFAULT_VIDEO_MODEL as VideoModelKey) ?? "seedance-2.0",
-): Promise<VideoGenResult> {
+export async function generateVideo(input: VideoGenInput): Promise<VideoGenResult> {
   return withRetry(
-    async () => {
-      switch (modelKey) {
-        case "seedance-2.0":
-          // 统一使用 2.0-fast
-          return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
-        case "seedance-2.0-pro":
-          // pro 系列不支持 r2v（带参考图），统一使用 2.0-fast
-          return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
-        case "seedance-2.0-fast":
-          return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
-        default:
-          throw new Error(`Unknown video model: ${modelKey}`);
-      }
-    },
-    { context: `video:${modelKey}`, retries: 2, minTimeout: 3000 },
+    () => createSeedanceTask(input),
+    { context: "video:seedance-2.0-fast", retries: 2, minTimeout: 3000 },
   );
 }

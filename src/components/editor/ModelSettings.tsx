@@ -30,7 +30,7 @@ export function ModelSettings({ projectId, currentConfig, episodeCount, language
         textModel: "doubao-seed-2-0",
         imageModel: "tencent-og-medium",
         storyboardImageModel: "tencent-og-medium",
-        videoModel: "seedance-2.0-pro",
+        videoModel: "seedance-2.0-fast",
       });
       setIsOpen(false);
     } finally {
@@ -67,7 +67,7 @@ export function ModelSettings({ projectId, currentConfig, episodeCount, language
             {[
               { label: "文本 / 剧本解析", value: "Doubao Seed 2.0" },
               { label: "故事板生图", value: "腾讯 OG Image 2 (Medium)" },
-              { label: "视频生成", value: "Seedance 2.0 Pro" },
+              { label: "视频生成", value: "Seedance 2.0 Fast" },
               { label: "备用生图", value: "万相 2.7（OG 失败时自动切换）" },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between text-xs">

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { generateVideo, pollSeedanceTask } from "@/lib/ai/video";
+import { createAssetGroup, ingestImageAndWait, pollAssetStatus } from "@/lib/ai/volcengine-assets";
 import { generateImage, type ImageModelKey } from "@/lib/ai/image";
 import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { wrapCinematicPrompt, filterSensitiveWords } from "@/lib/orchestrator/safety";
@@ -222,29 +223,65 @@ export const shotWorker = new Worker(
 
     // Part 2 参考图：使用角色已审核通过的 Volcengine asset:// ID。
     // asset:// 通道走报白资产库，不触发人脸审核（PrivacyInformation）。
-    // 故事板图（含真实人脸）无论 URL 还是 base64 都会被拦截，暂不传入。
-    // TODO: 待 Volcengine 开通故事板图 r2v 报白后，可将故事板图也 CreateAsset 入库后用 asset:// 传入。
+    // 自动检测 asset 是否在当前 project（VOLCENGINE_PROJECT_NAME）有效：
+    //   - 有效（Active）→ 直接使用
+    //   - 不存在（旧 default project 的 ID）→ 用 refImageUrl 重新入库到正确 project，更新 DB
     const refImageUrls: string[] = [];
     const volcengineAssetIds: string[] = [];
 
-    // 收集该镜头出镜角色中已审核通过（Active）的 asset ID，最多取 2 个
-    // 注意：若 asset 在火山引擎侧不存在（CreateAsset 曾超时），会报 InvalidParameter not found
-    // 此时视频生成不传参考图，降级为纯文字驱动
     for (const sc of shot.characters) {
       const c = sc.character;
-      if (
-        c.volcengineAssetId &&
-        c.volcengineStatus === "Active" &&
-        volcengineAssetIds.length < 2
-      ) {
-        volcengineAssetIds.push(c.volcengineAssetId);
+      if (volcengineAssetIds.length >= 2) break;
+      if (!c.volcengineAssetId || !c.refImageUrl) continue;
+
+      try {
+        // 先验证 asset 在当前 project 是否可用
+        const assetInfo = await pollAssetStatus(c.volcengineAssetId);
+        if (assetInfo === "Active") {
+          volcengineAssetIds.push(c.volcengineAssetId);
+          log.info({ assetId: c.volcengineAssetId, char: c.name }, "[shot-worker] ✓ asset valid in current project");
+        } else {
+          log.warn({ assetId: c.volcengineAssetId, status: assetInfo, char: c.name }, "[shot-worker] asset not Active, skipping");
+        }
+      } catch (err) {
+        // asset 在当前 project 找不到 → 用 refImageUrl 重新入库
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (errMsg.includes("not found") || errMsg.includes("NotFound")) {
+          log.info({ char: c.name, refImageUrl: c.refImageUrl }, "[shot-worker] asset not in current project, re-ingesting...");
+          try {
+            // 获取项目的 assetGroupId（如果没有就创建一个）
+            const proj = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+            let groupId = proj.volcengineAssetGroupId;
+            if (!groupId) {
+              const group = await createAssetGroup(`${proj.title}_assets`);
+              groupId = group.Id;
+              await db.project.update({ where: { id: projectId }, data: { volcengineAssetGroupId: groupId } });
+            }
+            const newAssetId = await ingestImageAndWait({
+              groupId: groupId!,
+              url: c.refImageUrl,
+              name: c.name,
+            });
+            // 更新数据库
+            await db.character.update({
+              where: { id: c.id },
+              data: { volcengineAssetId: newAssetId, volcengineStatus: "Active" },
+            });
+            volcengineAssetIds.push(newAssetId);
+            log.info({ newAssetId, char: c.name }, "[shot-worker] ✓ asset re-ingested into correct project");
+          } catch (reIngestErr) {
+            log.warn({ err: reIngestErr, char: c.name }, "[shot-worker] re-ingestion failed, skipping this character asset");
+          }
+        } else {
+          log.warn({ err: errMsg, char: c.name }, "[shot-worker] asset check failed, skipping");
+        }
       }
     }
 
     if (volcengineAssetIds.length === 0) {
-      log.warn("[shot-worker] no Active volcengine asset IDs for this shot — generating without reference image");
+      log.warn("[shot-worker] no valid asset IDs — generating without reference image");
     } else {
-      log.info({ assetIds: volcengineAssetIds }, "[shot-worker] Part2 reference: volcengine asset IDs");
+      log.info({ assetIds: volcengineAssetIds }, "[shot-worker] Part2 reference assets ready");
     }
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};

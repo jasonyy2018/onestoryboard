@@ -49,6 +49,9 @@ COPY --from=builder /app/package.json ./
 # 提示词模板（可通过 volume 覆盖）
 COPY --from=builder /app/prompts ./prompts
 
+# 运维脚本
+COPY --from=builder /app/scripts ./scripts
+
 # 本地资产目录
 RUN mkdir -p .local-assets
 

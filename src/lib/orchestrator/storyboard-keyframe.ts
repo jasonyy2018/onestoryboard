@@ -8,11 +8,11 @@ import { loadPromptTemplate, resolvePromptLocale } from "@/lib/prompts/load-temp
 import { textSuggestsUndeadOrSfxMakeup } from "@/lib/orchestrator/character-tone";
 
 export function storyboardKeyframeAspectRatio(aspect?: string): "16:9" | "9:16" | "1:1" | "4:3" {
-  const a = aspect || "16:9";
-  const base =
-    a === "9:16" || a === "16:9" || a === "1:1" || a === "4:3" || a === "21:9" ? a : "16:9";
-  if (base === "9:16" || base === "1:1" || base === "21:9") return "16:9";
-  return base as "16:9" | "4:3";
+  const a = aspect || "9:16";
+  if (a === "9:16") return "9:16";
+  if (a === "1:1") return "1:1";
+  if (a === "4:3") return "4:3";
+  return "16:9";
 }
 
 export function storyboardKeyframeNegative(lang: string, imagePrompt?: string): string {

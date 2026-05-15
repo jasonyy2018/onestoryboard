@@ -7,7 +7,6 @@ export interface VideoGenInput {
   volcengineAssetIds?: string[];
   duration?: number;
   ratio?: string;
-  resolution?: string;
   generateAudio?: boolean;
   cameraMove?: string;
   locale?: string;
@@ -55,7 +54,6 @@ async function createSeedanceTask(input: VideoGenInput): Promise<VideoGenResult>
     content,
     generate_audio: input.generateAudio ?? true,
     ratio: input.ratio ?? "16:9",
-    resolution: input.resolution || undefined,
     duration,
     watermark: false,
   };

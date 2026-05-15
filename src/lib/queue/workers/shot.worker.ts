@@ -277,7 +277,6 @@ export const shotWorker = new Worker(
         duration: shot.duration,
         cameraMove: shot.cameraMove ?? undefined,
         ratio: (config.aspectRatio as string) || "16:9",
-        resolution: (config.resolution as string) || "1080p",
         refImageUrls: refForVideo.length > 0 ? refForVideo : undefined,
         volcengineAssetIds: volcengineAssetIds.length > 0 ? volcengineAssetIds : undefined,
         locale: shot.scene.project.language,

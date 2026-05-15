@@ -101,16 +101,23 @@ export async function pollSeedanceTask(taskId: string): Promise<{ url: string; s
 
   const data = (await res.json()) as {
     status?: string;
-    content?: Array<{ type: string; video_url?: { url: string } }>;
+    content?: { video_url?: string } | Array<{ type: string; video_url?: { url: string } }>;
     error?: { code: string; message: string };
   };
 
   if (data.error) throw new Error(`Seedance task error [${data.error.code}]: ${data.error.message}`);
 
   const status = data.status ?? "pending";
-  const url = status === "succeeded"
-    ? (data.content?.find((c) => c.type === "video_url")?.video_url?.url ?? "")
-    : "";
+  let url = "";
+  if (status === "succeeded" && data.content) {
+    if (Array.isArray(data.content)) {
+      // 旧格式：数组
+      url = data.content.find((c) => c.type === "video_url")?.video_url?.url ?? "";
+    } else {
+      // 新格式：对象 { video_url: "https://..." }
+      url = (data.content as { video_url?: string }).video_url ?? "";
+    }
+  }
 
   return { url, status };
 }

@@ -33,7 +33,7 @@ const COST_PER_SECOND: Record<VideoModelKey, number> = {
 
 async function createSeedanceTask(
   input: VideoGenInput,
-  modelId: "doubao-seedance-2-0-260128" | "doubao-seedance-1-5-pro-251215" | "doubao-seedance-2-0-fast-260128",
+  modelId: "doubao-seedance-2-0-260128" | "doubao-seedance-2-0-fast-260128",
 ): Promise<VideoGenResult> {
   const apiKey = env.VOLCENGINE_ARK_API_KEY;
   if (!apiKey) throw new Error("VOLCENGINE_ARK_API_KEY is not configured");
@@ -138,7 +138,8 @@ export async function generateVideo(
         case "seedance-2.0":
           return createSeedanceTask(input, "doubao-seedance-2-0-260128");
         case "seedance-2.0-pro":
-          return createSeedanceTask(input, "doubao-seedance-1-5-pro-251215");
+          // 1.5-pro 不支持 r2v（带参考图），回落到 2.0 标准版
+          return createSeedanceTask(input, "doubao-seedance-2-0-260128");
         case "seedance-2.0-fast":
           return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
         default:

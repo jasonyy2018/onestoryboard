@@ -255,36 +255,24 @@ export const shotWorker = new Worker(
     const lang = shot.scene.project.language;
     const isZh = lang === "zh";
 
-    const narrativePrompt =
-      narrativeStyle === "FIRST_PERSON"
-        ? isZh
-          ? "【叙事风格】第一人称主观视角，带叙事旁白感。"
-          : "[Narrative] First-person subjective perspective with voice-over tone. "
-        : "";
+    const motionFromTable =
+      (shot.videoPrompt && shot.videoPrompt.trim()) || shot.prompt || shot.imagePrompt;
 
     const charactersPrompt = shot.characters
       .map((c) => `${c.character.name}: ${c.character.description}`)
       .join(isZh ? "；" : "; ");
 
-    const motionFromTable =
-      (shot.videoPrompt && shot.videoPrompt.trim()) || shot.prompt || shot.imagePrompt;
-
-    const elcineLine = isZh
-      ? `【ECP · 出片】参考图为 reference_image（约束风格与构图，非首帧锁定），视频内容完全由下方脚本驱动，约 ${shot.duration ?? 15} 秒。`
-      : `[ECP · Render] Reference image is passed as reference_image (style/composition guide, NOT first-frame lock). Video is fully driven by the script below (~${shot.duration ?? 15}s).`;
-
-    const deliverableLock = isZh
-      ? `【成片约束】纯叙事实拍，连贯时空；参考图仅作风格参考，不得复刻原图。禁止出现分镜格线、九宫格框、制作板水印等制作素材。`
-      : `[Deliverable lock] In-world photoreal footage, continuous time/space. Reference image guides style only — do not reproduce it literally. No grid lines, board watermarks, or PiP artifacts.`;
-
-    // Part 2 时间轴脚本：直接使用 ECP 生成的完整 videoPrompt，
-    // 保持与 Part 1 故事板图的 12 格节拍严格对应，不做二次切割重组。
     const loc = shot.scene.location;
-    const timeOfDay = shot.scene.timeOfDay ? (isZh ? ` · ${shot.scene.timeOfDay}` : ` · ${shot.scene.timeOfDay}`) : "";
+    const timeOfDay = shot.scene.timeOfDay ? ` · ${shot.scene.timeOfDay}` : "";
+
+    const narrativeLabel = isZh ? "# 旁白风格：" : "# Narration style:";
+    const narrativeValue = narrativeStyle === "FIRST_PERSON"
+      ? isZh ? "第一人称主观视角，解说型旁白，观众即主角。" : "First-person POV, explanatory voice-over, viewer is the protagonist."
+      : isZh ? "第三人称电影叙事。" : "Third-person cinematic narration.";
 
     const rowScriptCore = isZh
-      ? `${elcineLine}\n${deliverableLock}\n\n# 场景语境：\n${loc}${timeOfDay}\n\n# 旁白：\n${narrativePrompt || "（第三人称叙事）"}\n\n# 视频脚本（与故事板图 12 格节拍严格对应）：\n${motionFromTable}\n\n# 技术细节：\n物理模拟：逼真的火焰、布料随风飘动、烟尘粒子。\n镜头运动：${shot.cameraMove || "平滑推拉，35mm 变形宽银幕，浅景深"}。\n色彩分级：依据场景情绪，高对比度，粗砺质感，低饱和度。\n\n【角色】${charactersPrompt}`
-      : `${elcineLine}\n${deliverableLock}\n\n# Scene context:\n${loc}${timeOfDay}\n\n# Narration:\n${narrativePrompt || "(third-person cinematic)"}\n\n# Video script (strictly aligned to storyboard 12-panel beat order):\n${motionFromTable}\n\n# Technical details:\nPhysics: realistic fire, cloth dynamics in wind, smoke/ash particles.\nCamera: ${shot.cameraMove || "smooth push-pull, 35mm anamorphic, shallow DOF"}.\nColor grading: scene-derived, high contrast, gritty texture, desaturated.\n\n[Cast] ${charactersPrompt}`;
+      ? `# 场景：${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}\n\n# 角色：\n${charactersPrompt}\n\n# 镜头运动：${shot.cameraMove || "平滑推拉，浅景深"}\n\n# 视频脚本（严格按节拍顺序执行）：\n${motionFromTable}`
+      : `# Scene: ${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}\n\n# Cast:\n${charactersPrompt}\n\n# Camera: ${shot.cameraMove || "smooth push-pull, shallow DOF"}\n\n# Video script (execute in strict beat order):\n${motionFromTable}`;
 
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);

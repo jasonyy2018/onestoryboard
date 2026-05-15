@@ -138,7 +138,8 @@ export async function createAssetGroup(name: string, description: string = "") {
   return volcCall("CreateAssetGroup", {
     Name: name,
     Description: description,
-    GroupType: "AIGC"
+    GroupType: "AIGC",
+    ...(env.VOLCENGINE_PROJECT_NAME ? { ProjectName: env.VOLCENGINE_PROJECT_NAME } : {}),
   });
 }
 
@@ -152,13 +153,15 @@ export async function createAsset(args: {
     GroupId: args.groupId,
     URL: args.url,
     AssetType: args.assetType,
-    Name: args.name || ""
+    Name: args.name || "",
+    ...(env.VOLCENGINE_PROJECT_NAME ? { ProjectName: env.VOLCENGINE_PROJECT_NAME } : {}),
   });
 }
 
 export async function getAsset(assetId: string) {
   return volcCall("GetAsset", {
-    Id: assetId
+    Id: assetId,
+    ...(env.VOLCENGINE_PROJECT_NAME ? { ProjectName: env.VOLCENGINE_PROJECT_NAME } : {}),
   });
 }
 

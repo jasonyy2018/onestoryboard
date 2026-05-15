@@ -44,6 +44,8 @@ export const env = createEnv({
     VOLCENGINE_ARK_API_KEY: z.string().optional(),
     VOLCENGINE_ACCESS_KEY_ID: z.string().optional(),
     VOLCENGINE_SECRET_ACCESS_KEY: z.string().optional(),
+    /** 火山引擎项目名称，资产库与推理 API Key 必须在同一项目下才能互相访问。默认 default。 */
+    VOLCENGINE_PROJECT_NAME: z.string().optional(),
     DOUBAO_ENDPOINT_ID: z.string().optional(),
 
     // Defaults — locked: doubao text, tencent-og-medium image, seedance-2.0-fast video
@@ -81,6 +83,7 @@ export const env = createEnv({
     VOLCENGINE_ARK_API_KEY: process.env.VOLCENGINE_ARK_API_KEY,
     VOLCENGINE_ACCESS_KEY_ID: process.env.VOLCENGINE_ACCESS_KEY_ID,
     VOLCENGINE_SECRET_ACCESS_KEY: process.env.VOLCENGINE_SECRET_ACCESS_KEY,
+    VOLCENGINE_PROJECT_NAME: process.env.VOLCENGINE_PROJECT_NAME,
     DOUBAO_ENDPOINT_ID: process.env.DOUBAO_ENDPOINT_ID,
     DEFAULT_TEXT_MODEL: process.env.DEFAULT_TEXT_MODEL,
     DEFAULT_IMAGE_MODEL: process.env.DEFAULT_IMAGE_MODEL,

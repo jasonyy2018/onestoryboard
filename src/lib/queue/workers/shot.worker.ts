@@ -220,22 +220,29 @@ export const shotWorker = new Worker(
     });
     await job.updateProgress({ stage: "video-start", percent: 40 });
 
-    // Part 2 参考图：暂时禁用（等待火山引擎 r2v 人脸报白审批通过后再启用）。
-    // 报白通过后：把故事板图转 base64 内嵌传入，绕开外网回拉 URL 的问题。
-    // TODO: 报白通过后取消注释以下代码块并删除此注释。
-    // if (storyboardKeyUrl) {
-    //   try {
-    //     const imgBuf = await fetchAsBuffer(storyboardKeyUrl);
-    //     const b64 = "data:image/jpeg;base64," + imgBuf.toString("base64");
-    //     refImageUrls.push(b64);
-    //     log.info({ bytes: imgBuf.length }, "[shot-worker] ✓ storyboard keyframe as base64 ref");
-    //   } catch (err) {
-    //     log.warn({ err }, "[shot-worker] base64 conversion failed, skipping reference image");
-    //   }
-    // }
+    // Part 2 参考图：使用角色已审核通过的 Volcengine asset:// ID。
+    // asset:// 通道走报白资产库，不触发人脸审核（PrivacyInformation）。
+    // 故事板图（含真实人脸）无论 URL 还是 base64 都会被拦截，暂不传入。
+    // TODO: 待 Volcengine 开通故事板图 r2v 报白后，可将故事板图也 CreateAsset 入库后用 asset:// 传入。
     const refImageUrls: string[] = [];
     const volcengineAssetIds: string[] = [];
-    log.info("[shot-worker] reference image disabled — pending r2v privacy whitelist approval");
+
+    // 收集该镜头出镜角色中已审核通过（Active）的 asset ID，最多取 2 个
+    for (const sc of shot.characters) {
+      const c = sc.character;
+      if (
+        c.volcengineAssetId &&
+        c.volcengineStatus === "Active" &&
+        volcengineAssetIds.length < 2
+      ) {
+        volcengineAssetIds.push(c.volcengineAssetId);
+      }
+    }
+
+    log.info(
+      { assetIds: volcengineAssetIds.length, chars: shot.characters.length },
+      "[shot-worker] Part2 reference: volcengine asset IDs",
+    );
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};
     const narrativeStyle = (nConfig.narrativeStyle as string) || "THIRD_PERSON";

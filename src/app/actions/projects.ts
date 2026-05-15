@@ -49,7 +49,7 @@ export async function createProject(formData: FormData) {
       status: "DRAFT",
       modelConfig: {
         inputType,
-        narrativeStyle: "THIRD_PERSON",
+        narrativeStyle: "FIRST_PERSON",
         textModel: "doubao-seed-2-0",
         imageModel: "tencent-og-medium",
         storyboardImageModel: "tencent-og-medium",

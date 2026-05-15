@@ -7,7 +7,7 @@ The reference image constrains visual style, composition direction, and characte
 
 ## Visual style & quality
 
-Photoreal cinematic rendering, ultra-realistic textures, IMAX quality, dramatic golden-hour lighting, volumetric fog, realistic atmospheric scattering, 35mm anamorphic widescreen, shallow depth of field.
+Photoreal cinematic rendering, ultra-realistic textures, IMAX quality, vertical portrait framing (9:16), dramatic emotionally-driven lighting, volumetric fog, realistic atmospheric scattering, shallow depth of field, high emotional tension visual language.
 
 ## Motion & camera sequence (15-second timeline, strictly enforced)
 
@@ -22,7 +22,7 @@ Execute them in strict order; Speed Ramp transitions must be smooth and beat-syn
 
 ## Native audio (required)
 
-`generate_audio: true` (dialogue + ambience + SFX), in sync with picture; do not produce silent footage unless the script explicitly demands silence.
+`generate_audio: true`. **Keep only**: sync dialogue, on-set ambience (wind/rain/crowd/room tone), and diegetic SFX (footsteps/impacts/object sounds). **Strictly forbid**: background music (BGM), cinematic score, stock music beds. Audio must be in sync with picture; do not produce silent footage unless the script explicitly demands silence.
 
 ## Negative prompts (strictly excluded)
 

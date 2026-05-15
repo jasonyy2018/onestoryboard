@@ -299,7 +299,7 @@ export const shotWorker = new Worker(
         prompt: richPrompt,
         duration: shot.duration,
         cameraMove: shot.cameraMove ?? undefined,
-        ratio: (config.aspectRatio as string) || "16:9",
+        ratio: (config.aspectRatio as string) || "9:16",
         refImageUrls: refForVideo.length > 0 ? refForVideo : undefined,
         volcengineAssetIds: volcengineAssetIds.length > 0 ? volcengineAssetIds : undefined,
         locale: shot.scene.project.language,

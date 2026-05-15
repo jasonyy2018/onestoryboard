@@ -53,7 +53,7 @@ async function createSeedanceTask(input: VideoGenInput): Promise<VideoGenResult>
     model: MODEL_ID,
     content,
     generate_audio: input.generateAudio ?? true,
-    ratio: input.ratio ?? "16:9",
+    ratio: input.ratio ?? "9:16",
     duration,
     watermark: false,
   };

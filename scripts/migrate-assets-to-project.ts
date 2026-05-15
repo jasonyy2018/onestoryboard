@@ -33,7 +33,7 @@ console.log(`Target project: ${projectName}`);
 function sign(method: string, path: string, query: Record<string, string>, headers: Record<string, string>, body: string, now: Date) {
   const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, "");
   const dateStamp = amzDate.slice(0, 8);
-  const he = Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v.trim()]).sort(([a], [b]) => a < b ? -1 : 1);
+  const he = Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v.trim()]).sort(([a = ""], [b = ""]) => a < b ? -1 : 1);
   const ch = he.map(([k, v]) => `${k}:${v}`).join("\n") + "\n";
   const sh = he.map(([k]) => k).join(";");
   const cq = Object.entries(query).sort().map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");

@@ -111,7 +111,7 @@ export const shotWorker = new Worker(
   async (job) => {
     const { shotId, projectId } = PayloadSchema.parse(job.data);
     const log = logger.child({ shotId, projectId, jobId: job.id });
-    log.info("[shot-worker] start");
+    log.info("[shot-worker] ▶ start");
 
     const shot = await db.shot.findUniqueOrThrow({
       where: { id: shotId },
@@ -122,9 +122,14 @@ export const shotWorker = new Worker(
     });
 
     if (shot.status === "READY" && shot.videoUrl) {
-      log.info("[shot-worker] shot already ready, skipping");
+      log.info("[shot-worker] ✓ already READY, skipping");
       return { videoUrl: shot.videoUrl };
     }
+
+    log.info(
+      { currentStatus: shot.status, hasImage: !!shot.imageUrl, hasVideo: !!shot.videoUrl },
+      "[shot-worker] shot state",
+    );
 
     const project = await db.project.findUnique({ where: { id: projectId } });
     if (project?.status === "PAUSED" || project?.status === "CANCELLED") {
@@ -152,6 +157,7 @@ export const shotWorker = new Worker(
         data: { status: "GENERATING_IMAGE" },
       });
       await job.updateProgress({ stage: "keyframe-start", percent: 5 });
+      log.info({ model: imageModelKey }, "[shot-worker] ⬜ Part1 keyframe generating...");
       await job.log(`[shot-worker] keyframe model=${imageModelKey} layout=multi_panel_sheet`);
 
       const lang = shot.scene.project.language;
@@ -200,7 +206,9 @@ export const shotWorker = new Worker(
       });
 
       await job.updateProgress({ stage: "keyframe-done", percent: 35 });
-      log.info({ cost: imgRes.cost }, "[shot-worker] keyframe persisted");
+      log.info({ cost: imgRes.cost, url: persistedKey }, "[shot-worker] ✓ Part1 keyframe done");
+    } else {
+      log.info("[shot-worker] ✓ Part1 keyframe already exists, skipping image generation");
     }
 
     // ─── 2) Video (~15s): videoPrompt + Part2 template + 故事板图作为唯一参考图 ───
@@ -265,6 +273,10 @@ export const shotWorker = new Worker(
     const videoModelKey = rawVideo as VideoModelKey;
 
     const refForVideo = dedupeUrls(refImageUrls).slice(0, SEEDANCE_MAX_REFERENCE_IMAGES);
+    log.info(
+      { videoModel: videoModelKey, refImages: refForVideo.length, duration: shot.duration },
+      "[shot-worker] ⬜ Part2 video generating...",
+    );
     const videoRes = await generateVideo(
       {
         prompt: richPrompt,
@@ -283,6 +295,7 @@ export const shotWorker = new Worker(
     let videoUrl = videoRes.url;
 
     if (videoRes.taskId && !videoUrl) {
+      log.info({ taskId: videoRes.taskId }, "[shot-worker] polling Seedance task...");
       videoUrl = await pollTask({
         taskId: videoRes.taskId,
         pollFn: pollSeedanceTask,
@@ -291,6 +304,7 @@ export const shotWorker = new Worker(
       });
     }
 
+    log.info({ videoUrl }, "[shot-worker] ✓ Part2 video done, persisting...");
     const vidBuf = await fetchAsBuffer(videoUrl);
     const persistedVid = await persistAsset({
       key: `projects/${projectId}/shots/${shotId}.mp4`,
@@ -312,7 +326,7 @@ export const shotWorker = new Worker(
     });
 
     await job.updateProgress({ stage: "done", percent: 100 });
-    log.info({ cost: videoRes.cost }, "[shot-worker] done");
+    log.info({ cost: videoRes.cost, videoUrl: persistedVid }, "[shot-worker] ✓ done");
     return { videoUrl: persistedVid };
   },
   {

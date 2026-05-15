@@ -136,10 +136,11 @@ export async function generateVideo(
     async () => {
       switch (modelKey) {
         case "seedance-2.0":
-          return createSeedanceTask(input, "doubao-seedance-2-0-260128");
+          // 统一使用 2.0-fast
+          return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
         case "seedance-2.0-pro":
-          // 1.5-pro 不支持 r2v（带参考图），回落到 2.0 标准版
-          return createSeedanceTask(input, "doubao-seedance-2-0-260128");
+          // pro 系列不支持 r2v（带参考图），统一使用 2.0-fast
+          return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
         case "seedance-2.0-fast":
           return createSeedanceTask(input, "doubao-seedance-2-0-fast-260128");
         default:

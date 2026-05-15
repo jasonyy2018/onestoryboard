@@ -279,7 +279,7 @@ export const shotWorker = new Worker(
     }
 
     if (volcengineAssetIds.length === 0) {
-      log.warn("[shot-worker] no valid asset IDs — generating without reference image");
+      log.warn("[shot-worker] no valid character asset IDs — generating without reference image");
     } else {
       log.info({ assetIds: volcengineAssetIds }, "[shot-worker] Part2 reference assets ready");
     }

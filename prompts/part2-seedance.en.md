@@ -2,8 +2,13 @@
 
 ## Reference image (role: reference_image)
 
-Input: this row's 12-panel photoreal production sheet, passed as `reference_image`.
-The reference image constrains visual style, composition direction, and character consistency — **NOT a first-frame lock**; video content is fully driven by the text script below.
+The input image is a 12-panel storyboard previz sheet for this shot. **Extract only**:
+- Character appearance, makeup, costume, and body type
+- Scene spatial layout, lighting direction, and color mood
+- Composition framing and shot-size reference per panel
+
+**Strictly forbidden**: filming the reference image itself (no "photo of paper", previz screenshot, production board frame, or grid watermark in the output).
+Video content is entirely driven by the text script below — the reference image is a visual specification document, not a subject to be filmed.
 
 ## Visual style & quality
 
@@ -30,7 +35,7 @@ cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, c
 
 ## Deliverable lock
 
-In-world photoreal footage, continuous time/space; coverage must look like live on-set photography — do not reproduce the reference sheet literally (avoid "photo of paper" or previz screenshot effect).
+In-world photoreal footage, continuous time/space; coverage must look like live on-set photography. **The output must never show storyboard grid lines, production board borders, reference image overlays, or any "photo of paper / screenshot" texture.** Every frame must be a real scene with real characters in motion.
 
 ---
 

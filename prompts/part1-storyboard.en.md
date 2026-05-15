@@ -10,10 +10,11 @@ Live-action cinematic quality, photorealism, film-grade lighting, realistic huma
 
 ## Layout — 12-panel grid (strictly enforced)
 
-- Divide the full frame into **4 columns × 3 rows = 12** clean panels in a professional previz wall layout; crisp alignment.
+- Divide the full frame into **3 columns × 4 rows = 12** clean panels in a vertical portrait layout (9:16 orientation); crisp alignment.
+- **Every panel must use vertical 9:16 framing**, matching the short-drama portrait delivery spec.
 - **Each panel = ~1–2 seconds of narrative beat**, left-to-right, top-to-bottom: panel 1 (second 1) → panel 12 (second 15).
 - **Every panel must be photoreal live-action**: real human skin and proportions, real wardrobe and locations, cinematic lighting and lenses; NO anime, illustration, or toon-shading.
-- Secondary graphic layers (over cells or margins): camera/movement arrows, lens labels (CU/MS/OTS), lens spec callouts (e.g. 35mm anamorphic), one-line shot description under each panel, director's notes, slim color-script strip.
+- Secondary graphic layers (over cells or margins): camera/movement arrows, lens labels (CU/MS/OTS), one-line shot description under each panel, emotion color strip.
 - All panels share the same cast look, environment, and lighting logic (same ~15s take).
 
 ## 12-Panel Beat Structure (derived from ECP lock text below)

@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { generateVideo, pollSeedanceTask } from "@/lib/ai/video";
-import { ingestImageAndWait } from "@/lib/ai/volcengine-assets";
 import { generateImage, type ImageModelKey } from "@/lib/ai/image";
 import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { wrapCinematicPrompt, filterSensitiveWords } from "@/lib/orchestrator/safety";
@@ -221,32 +220,19 @@ export const shotWorker = new Worker(
     });
     await job.updateProgress({ stage: "video-start", percent: 40 });
 
-    // Part 2 参考图：将故事板图上传到 Volcengine Asset Library（asset:// 通道绕过人脸审核）
-    // 若 AK/SK 未配置则回退到普通 image_url
+    // Part 2 参考图：把故事板图读取后转 base64 直接内嵌传给 Seedance。
+    // 避免依赖 Volcengine Asset Library（不稳定）或要求 Seedance 回来拉外网 URL（可能超时/人脸拦截）。
     const refImageUrls: string[] = [];
     const volcengineAssetIds: string[] = [];
 
     if (storyboardKeyUrl) {
-      const project2 = await db.project.findUniqueOrThrow({ where: { id: projectId } });
-      const groupId = project2.volcengineAssetGroupId;
-
-      if (groupId && env.VOLCENGINE_ACCESS_KEY_ID && env.VOLCENGINE_SECRET_ACCESS_KEY) {
-        try {
-          log.info({ groupId }, "[shot-worker] ingesting storyboard keyframe into Volcengine Asset Library...");
-          const assetId = await ingestImageAndWait({
-            groupId,
-            url: storyboardKeyUrl,
-            name: `keyframe-${shotId}`,
-          });
-          volcengineAssetIds.push(assetId);
-          log.info({ assetId }, "[shot-worker] ✓ storyboard keyframe ingested as asset");
-        } catch (err) {
-          log.warn({ err }, "[shot-worker] asset ingestion failed, falling back to plain image_url");
-          refImageUrls.push(storyboardKeyUrl);
-        }
-      } else {
-        log.warn("[shot-worker] no volcengine groupId or AK/SK, using plain image_url for storyboard keyframe");
-        refImageUrls.push(storyboardKeyUrl);
+      try {
+        const imgBuf = await fetchAsBuffer(storyboardKeyUrl);
+        const b64 = "data:image/jpeg;base64," + imgBuf.toString("base64");
+        refImageUrls.push(b64);
+        log.info({ bytes: imgBuf.length }, "[shot-worker] ✓ storyboard keyframe converted to base64");
+      } catch (err) {
+        log.warn({ err, url: storyboardKeyUrl }, "[shot-worker] base64 conversion failed, skipping reference image");
       }
     }
 

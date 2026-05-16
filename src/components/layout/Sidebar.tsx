@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Folder, Image as ImageIcon, Users, Settings2, Plus, Globe, ChevronDown, ChevronRight, Map, Box } from "lucide-react";
+import { Sparkles, Folder, Image as ImageIcon, Users, Settings2, Plus, Globe, ChevronDown, ChevronRight, Map, Box, Film } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 function useQueueStats() {
@@ -62,7 +62,15 @@ export function Sidebar({ projectCount = 0 }: { projectCount?: number }) {
           icon={<Folder className="h-4 w-4 text-accent-purple" />}
           label={t.sidebar.projects}
           badge={String(projectCount)}
-          active={isActive("/projects")}
+          active={isActive("/projects") && !isActive("/projects/new")}
+        />
+
+        {/* 剧集系列入口（直接跳到新建页面的 SERIAL 模式也在这里）*/}
+        <NavLink
+          href="/series"
+          icon={<Film className="h-4 w-4 text-accent-amber" />}
+          label="剧集系列"
+          active={isActive("/series")}
         />
 
         {/* 资产中心 */}

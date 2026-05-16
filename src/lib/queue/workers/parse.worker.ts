@@ -21,7 +21,15 @@ export const parseWorker = new Worker(
         );
       }
 
-      await invokeShortDramaPipeline(projectId);
+      if (project?.seriesId) {
+        // Series 项目：走角色池复用流水线
+        const { runSeriesEpisodePipeline } = await import("@/lib/orchestrator/series");
+        await runSeriesEpisodePipeline(projectId);
+      } else {
+        // 独立单集项目：走原有流水线
+        await invokeShortDramaPipeline(projectId);
+      }
+
       return { ok: true };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -41,12 +49,9 @@ export const parseWorker = new Worker(
   {
     connection: createBullConnection(),
     concurrency: 4,
-    // parse + 资产生成最长可达 20 分钟（腾讯 OG 轮询 + Volcengine 审核）
-    // lockDuration: worker 持锁时间（ms），超过则被判定 stalled
-    // stalledInterval: 检查 stalled 的间隔（ms）
-    lockDuration: 30 * 60 * 1000,   // 30 分钟
-    stalledInterval: 60 * 1000,      // 每 60 秒检查一次
-    maxStalledCount: 1,              // 最多重试 1 次 stalled
+    lockDuration: 30 * 60 * 1000,
+    stalledInterval: 60 * 1000,
+    maxStalledCount: 1,
   },
 );
 

@@ -23,6 +23,46 @@ model User {
   credits   Int      @default(100)
   createdAt DateTime @default(now())
   projects  Project[]
+  series    Series[]
+}
+
+/// 剧集系列 — 可包含 1..N 集 Project，共享角色池
+model Series {
+  id        String   @id @default(cuid())
+  title     String
+  language  String   @default("zh")
+  /// SERIAL = 连载逐集追加；FULL = 整部一次性导入
+  mode      String   @default("SERIAL")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episodes   Project[]
+  characters SeriesCharacter[]
+
+  @@index([userId, createdAt])
+}
+
+/// 全剧角色池 — 跨集复用参考图与 Volcengine 资产
+model SeriesCharacter {
+  id                String   @id @default(cuid())
+  seriesId          String
+  name              String
+  description       String?  @db.Text
+  personality       String?  @db.Text
+  background        String?  @db.Text
+  visualPrompt      String?  @db.Text
+  refImageUrl       String?
+  volcengineAssetId String?
+  volcengineStatus  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@unique([seriesId, name])
+  @@index([seriesId])
 }
 
 model Project {
@@ -40,21 +80,28 @@ model Project {
   /// Per-episode masters JSON: [{ episodeNumber, videoUrl, durationSec }, ...]
   episodeFinals   Json?
   thumbnailUrl    String?
-  duration        Int? // seconds �?sum of episode masters when episodeFinals is set
+  duration        Int? // seconds — sum of episode masters when episodeFinals is set
   errorMessage    String?       @db.Text
   startedAt       DateTime?
   completedAt     DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  volcengineAssetGroupId String? // 火山引擎资产�?ID
+  volcengineAssetGroupId String?
+
+  /// Series 关联（null = 独立单集项目，向后兼容）
+  seriesId            String?
+  /// 在 Series 中的集数（1-based）
+  seriesEpisodeNumber Int?
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series     Series?     @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   scenes     Scene[]
   characters Character[]
   jobs       Job[]
 
   @@index([userId, status])
   @@index([status, createdAt])
+  @@index([seriesId, seriesEpisodeNumber])
 }
 
 model Scene {

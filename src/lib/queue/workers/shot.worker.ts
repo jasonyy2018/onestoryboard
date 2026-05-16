@@ -292,21 +292,46 @@ export const shotWorker = new Worker(
     const motionFromTable =
       (shot.videoPrompt && shot.videoPrompt.trim()) || shot.prompt || shot.imagePrompt;
 
+    // 角色外貌锁定：同时注入 description + visualPrompt，强制东亚面孔约束
     const charactersPrompt = shot.characters
-      .map((c) => `${c.character.name}: ${c.character.description}`)
-      .join(isZh ? "；" : "; ");
+      .map((c) => {
+        const visual = c.character.visualPrompt ? `（外貌：${c.character.visualPrompt}）` : "";
+        const visualEn = c.character.visualPrompt ? ` (appearance: ${c.character.visualPrompt})` : "";
+        return isZh
+          ? `${c.character.name}: ${c.character.description}${visual}`
+          : `${c.character.name}: ${c.character.description}${visualEn}`;
+      })
+      .join(isZh ? "；\n" : "; \n");
 
     const loc = shot.scene.location;
     const timeOfDay = shot.scene.timeOfDay ? ` · ${shot.scene.timeOfDay}` : "";
 
+    // 第一人称旁白：若 videoPrompt 里包含旁白文字（[PRODUCTION NOTES] 或独立旁白段落），
+    // 单独提取并标注为画外音解说，让 Seedance 以 V.O. 口吻生成主观镜头+同期声。
     const narrativeLabel = isZh ? "# 旁白风格：" : "# Narration style:";
     const narrativeValue = narrativeStyle === "FIRST_PERSON"
-      ? isZh ? "第一人称主观视角，解说型旁白，观众即主角。" : "First-person POV, explanatory voice-over, viewer is the protagonist."
-      : isZh ? "第三人称电影叙事。" : "Third-person cinematic narration.";
+      ? isZh
+        ? "第一人称主观视角（POV）。观众即主角。画面须以主观手持跟拍或 POV 镜头呈现，同期声包含主角低沉的内心独白旁白（画外音 V.O.），语速舒缓、情绪克制、带气息感。禁止出现主角正脸直视镜头（除非剧本明确要求）。"
+        : "First-person subjective POV. Viewer IS the protagonist. Use handheld POV or first-person camera. Include protagonist's quiet internal monologue as voice-over (V.O.) in the same-source audio, slow pace, restrained emotion, breathy tone. Avoid protagonist facing camera directly unless script demands it."
+      : isZh ? "第三人称电影叙事，多机位客观覆盖。" : "Third-person cinematic narration, objective multi-angle coverage.";
+
+    // 若是第一人称且 videoPrompt 里有明显的旁白文字，提取出来强化标注
+    let voiceoverBlock = "";
+    if (narrativeStyle === "FIRST_PERSON" && motionFromTable) {
+      // 匹配 [PRODUCTION NOTES] 段落或「旁白：」「V.O.:」等标记后的文字
+      const voMatch = motionFromTable.match(
+        /(?:\[PRODUCTION NOTES\]|旁白[：:：]|V\.O\.[：:：]?|画外音[：:：]?)([\s\S]*?)(?:\n\[|\n#|$)/i,
+      );
+      if (voMatch && voMatch[1]?.trim()) {
+        voiceoverBlock = isZh
+          ? `\n# 画外音旁白（第一人称 V.O.，须出现在同期声中）：\n${voMatch[1].trim()}`
+          : `\n# Voice-over narration (first-person V.O., must appear in diegetic audio):\n${voMatch[1].trim()}`;
+      }
+    }
 
     const rowScriptCore = isZh
-      ? `# 场景：${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}\n\n# 角色：\n${charactersPrompt}\n\n# 镜头运动：${shot.cameraMove || "平滑推拉，浅景深"}\n\n# 视频脚本（严格按节拍顺序执行）：\n${motionFromTable}`
-      : `# Scene: ${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}\n\n# Cast:\n${charactersPrompt}\n\n# Camera: ${shot.cameraMove || "smooth push-pull, shallow DOF"}\n\n# Video script (execute in strict beat order):\n${motionFromTable}`;
+      ? `# 场景：${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}${voiceoverBlock}\n\n# 角色外貌锁定（严格遵守，禁止替换为西方面孔）：\n${charactersPrompt}\n\n# 镜头运动：${shot.cameraMove || "平滑推拉，浅景深"}\n\n# 视频脚本（严格按节拍顺序执行）：\n${motionFromTable}`
+      : `# Scene: ${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}${voiceoverBlock}\n\n# Cast appearance lock (strictly follow, do not replace with Western faces):\n${charactersPrompt}\n\n# Camera: ${shot.cameraMove || "smooth push-pull, shallow DOF"}\n\n# Video script (execute in strict beat order):\n${motionFromTable}`;
 
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);

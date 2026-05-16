@@ -62,6 +62,8 @@ Each of \`imagePrompt\` and \`videoPrompt\` MUST be one multi-line string using 
 
 ## Hard rules
 - **Language (match the screenplay locale)**: Besides JSON keys and each shot's type enum (English tokens required by the schema), write the imagePrompt, videoPrompt, and cameraMove body text in the same language as the provided scene (English script → English prompts; non-English script → that language). Do not mix a full paragraph of the wrong language.
+- **FIRST-PERSON NARRATION**: When Narrative Style is FIRST-PERSON, the **[PRODUCTION NOTES]** section of every videoPrompt MUST include the protagonist's actual voice-over monologue text (V.O.) for that shot — a 1–2 sentence internal thought or narration derived from the scene's scriptText. Prefix it with "旁白 V.O.：" (Chinese) or "V.O.:" (English). This text will be rendered as diegetic voice-over audio by the video model. Do NOT omit it.
+- **CHARACTER ETHNICITY LOCK (Chinese projects)**: For all characters in Chinese-language scripts, every **[CHARACTER CONTINUITY]** section MUST explicitly state the character's East Asian (Chinese) appearance using terms like "东亚中国面孔", "亚裔五官", "单眼皮或内双", along with their specific visualPrompt description. Strictly forbid Western/Caucasian features for Chinese characters.
 - LIVE ACTION realism only: NO anime, NO game engine look, NO cartoon.
 - Storyboard panel image (not the final MP4): the product may render each row as ONE photoreal **multi-panel studio planning sheet** (previz / production-board layout). Every panel must stay live-action photography. Arrows, shot labels, marginal notes, and slim color-script strips are allowed only as secondary graphic layers on the sheet. Use **[STORYBOARD LAYOUT]** and **[SHOT SEQUENCE]** to clarify this row's role inside the multi-panel strip (e.g. setup / escalation / beat landing) so the sheet still reads as one coherent ~15s moment.
 - NO gratuitous physical contact unless the script clearly requires it for plot.
@@ -142,6 +144,8 @@ const STORYBOARD_SYSTEM_ZH = `你是真人写实短剧的 AI 导演。
 
 ## 硬性规则
 - **语言（与中文剧一致）**：除 JSON 键名与每条 type 枚举值（如 WIDE、CLOSE_UP）必须为英文外，imagePrompt、videoPrompt、cameraMove 的正文须用与场次剧本一致的中文撰写；禁止用英文整段描写画面或动作（剧本中外文对白、专有名词、品牌等需保留的除外）。若误输出大段英文，须改写为中文后再提交 JSON。
+- **第一人称旁白（FIRST_PERSON 模式必须执行）**：当叙事风格为第一人称时，每一条 videoPrompt 的 **[PRODUCTION NOTES]** 段落中**必须**包含主角该镜头的画外音旁白文字（V.O.），以「旁白 V.O.：」为前缀，内容为从场次剧本中提炼的 1–2 句内心独白或叙事解说。该文字将由视频模型以同期声形式渲染为第一人称画外音，**不得省略**。
+- **角色族裔锁定（中文项目强制）**：中文剧本中所有角色，每一条 videoPrompt 的 **[CHARACTER CONTINUITY]** 段落必须明确写出该角色的东亚中国面孔特征，使用「东亚中国面孔」「亚裔五官」「单眼皮或内双眼皮」等词汇，并结合角色的 visualPrompt 外貌描述。**严禁**为中文角色生成西方/高加索面孔，**严禁**出现金发碧眼等欧美特征。
 - 仅允许真人写实：禁止动漫、游戏渲染、卡通。
 - 分镜表图（非成片 MP4）：产品可能将每一镜渲为**单张**照片级「多格制片板式分镜表」；**每一格**须为真人实拍影像。箭头、镜号、手记、窄色带等仅可作为板面次要图层。请在 **[STORYBOARD LAYOUT]**、**[SHOT SEQUENCE]** 中写清本条在多格表中的节奏角色（如铺垫/升级/落点），使整板仍像同一约 15 秒镜头的一组连拍瞬间。
 - 除非剧本情节必须，禁止无意义的肢体接触。

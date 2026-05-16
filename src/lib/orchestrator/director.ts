@@ -177,8 +177,21 @@ export async function runEcpStoryboardForProject(projectId: string): Promise<voi
  * 删除所有分镜行后仅重跑 ECP（不重新解析全文、不重画 MRI）。
  * 会清空成片相关字段；调用方应先取消 BullMQ 中与该项目相关的排队任务。
  * 若 LLM 中途失败，会再次清空分镜并写入 FAILED，避免留下半套镜头。
+ *
+ * 并发保护：若项目当前已处于 STORYBOARDING 阶段，说明已有实例在跑，直接返回避免重复。
  */
 export async function regenerateStructuredPromptsOnly(projectId: string): Promise<void> {
+  // 乐观锁：用 updateMany 原子地把状态从非 STORYBOARDING 切换到 STORYBOARDING。
+  // 若已经是 STORYBOARDING（另一次并发调用先到），updateMany 匹配 0 行 → 直接退出。
+  const lock = await db.project.updateMany({
+    where: { id: projectId, pipelineStage: { not: "STORYBOARDING" } },
+    data: { pipelineStage: "STORYBOARDING" },
+  });
+  if (lock.count === 0) {
+    logger.warn({ projectId }, "[director] regenerateStructuredPromptsOnly already running — skipping duplicate");
+    return;
+  }
+
   await db.shot.deleteMany({ where: { scene: { projectId } } });
   try {
     await runEcpStoryboardForProject(projectId);

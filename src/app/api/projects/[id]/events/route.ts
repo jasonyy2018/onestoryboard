@@ -21,13 +21,16 @@ export async function GET(
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
+      let closed = false;
       const send = (event: string, data: unknown) => {
+        if (closed) return;
         try {
           controller.enqueue(
             encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
           );
-        } catch (err) {
-          // Controller might be closed, cleanup
+        } catch {
+          // Controller already closed — mark and stop
+          closed = true;
           cleanup();
         }
       };
@@ -83,7 +86,10 @@ export async function GET(
         if (fresh?.status === "COMPLETED" || fresh?.status === "FAILED") {
           send("done", { status: fresh.status });
           cleanup();
-          controller.close();
+          if (!closed) {
+            closed = true;
+            controller.close();
+          }
         }
       }, 3000);
 

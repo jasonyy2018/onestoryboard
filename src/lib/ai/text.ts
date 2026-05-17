@@ -2,8 +2,10 @@ import { env } from "@/lib/env";
 import { withRetry } from "@/lib/ai/retry";
 import type { ZodTypeAny, z } from "zod";
 
-export type TextModelKey = "doubao-seed-2-0";
+// export type TextModelKey = "doubao-seed-2-0"; // disabled: switched to DeepSeek V3 Flash
+export type TextModelKey = "deepseek-v3-flash";
 
+// async function callDoubao(...) — disabled: switched to DeepSeek V3 Flash via Volcengine ARK
 async function callDoubao(args: {
   prompt: string;
   system?: string;
@@ -16,7 +18,8 @@ async function callDoubao(args: {
       Authorization: `Bearer ${env.VOLCENGINE_ARK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: env.DOUBAO_ENDPOINT_ID || "doubao-seed-2-0-lite-260428",
+      // model: env.DOUBAO_ENDPOINT_ID || "doubao-seed-2-0-lite-260428", // disabled
+      model: env.DOUBAO_ENDPOINT_ID || "deepseek-v3-2-251201",
       messages: [
         ...(args.system ? [{ role: "system", content: args.system }] : []),
         { role: "user", content: args.prompt },

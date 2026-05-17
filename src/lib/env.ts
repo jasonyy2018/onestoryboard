@@ -25,7 +25,7 @@ export const env = createEnv({
      */
     LOCAL_ASSETS_DIR: z.string().optional(),
 
-    // AI keys — only Volcengine (Doubao text + Seedance video) and Tencent (OG image) are used
+    // AI keys — only Volcengine (DeepSeek V3 Flash text + Seedance video) and Tencent (OG image) are used
 
     // 国内 AI 平台
     ALIBABA_DASHSCOPE_API_KEY: z.string().optional(),
@@ -48,8 +48,9 @@ export const env = createEnv({
     VOLCENGINE_PROJECT_NAME: z.string().optional(),
     DOUBAO_ENDPOINT_ID: z.string().optional(),
 
-    // Defaults — locked: doubao text, tencent-og-medium image, seedance-2.0-fast video
-    DEFAULT_TEXT_MODEL: z.string().default("doubao-seed-2-0"),
+    // Defaults — locked: deepseek-v3-flash text (via Volcengine ARK), tencent-og-medium image, seedance-2.0-fast video
+    // DEFAULT_TEXT_MODEL: z.string().default("doubao-seed-2-0"), // disabled: switched to DeepSeek V3 Flash
+    DEFAULT_TEXT_MODEL: z.string().default("deepseek-v3-flash"),
     DEFAULT_IMAGE_MODEL: z.string().default("tencent-og-medium"),
     DEFAULT_VIDEO_MODEL: z.string().default("seedance-2.0-fast"),
 

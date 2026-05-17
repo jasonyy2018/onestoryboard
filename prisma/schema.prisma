@@ -230,6 +230,7 @@ enum ProjectStatus {
 
 enum PipelineStage {
   IDLE
+  ASSET_EXTRACTION
   PARSING
   STORYBOARDING
   ASSET_GENERATION

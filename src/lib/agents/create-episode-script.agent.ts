@@ -65,7 +65,7 @@ export async function createEpisodeScript(
   const system = isZh ? EPISODE_SCRIPT_SYSTEM_ZH : EPISODE_SCRIPT_SYSTEM_EN;
 
   const charContext = project.characters
-    .map((c: { name: string; visualPrompt?: string | null; description: string }) => `@${c.name}:\n  visual: ${c.visualPrompt || c.description}`)
+    .map((c: { name: string; visualPrompt?: string | null; description: string | null }) => `@${c.name}:\n  visual: ${c.visualPrompt || c.description || ""}`)
     .join("\n\n");
 
   const sceneContext = project.scenes

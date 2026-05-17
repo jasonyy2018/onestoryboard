@@ -326,7 +326,7 @@ export async function runParseAndStoryboard(projectId: string) {
         project.rawScript,
         project.episodeCount,
         project.language,
-        textModel,
+        textModel as TextModelKey,
         inputType as "SCRIPT" | "NOVEL",
         narrativeStyle as "THIRD_PERSON" | "FIRST_PERSON",
       );

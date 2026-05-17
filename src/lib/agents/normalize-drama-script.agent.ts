@@ -60,7 +60,7 @@ export async function normalizeDramaScript(
   const system = isZh ? NORMALIZE_SYSTEM_ZH : NORMALIZE_SYSTEM_EN;
 
   const charContext = project.characters
-    .map((c: { name: string; visualPrompt?: string | null; description: string }) => `@${c.name}: ${c.visualPrompt || c.description}`)
+    .map((c: { name: string; visualPrompt?: string | null; description: string | null }) => `@${c.name}: ${c.visualPrompt || c.description || ""}`)
     .join("\n");
 
   const sceneText = project.scenes

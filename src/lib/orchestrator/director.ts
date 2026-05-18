@@ -100,8 +100,9 @@ export async function runEcpStoryboardForProject(projectId: string): Promise<voi
 
   const isEn = project.language === "en";
 
-  // 2 分钟/集目标：120s ÷ 15s = 8 shots/集
-  const SHOTS_PER_EPISODE = 8;
+  // 1 分钟/集目标：60s ÷ 15s = 4 shots/集
+  const SHOTS_PER_EPISODE = 4;
+  const SECONDS_PER_SHOT = 15;
 
   // 按集分组场次数
   const episodeSceneCounts = new Map<number, number>();
@@ -110,10 +111,11 @@ export async function runEcpStoryboardForProject(projectId: string): Promise<voi
   }
 
   for (const [ep, count] of episodeSceneCounts) {
-    if (count > 6) {
+    if (count > SHOTS_PER_EPISODE) {
+      const actualTotal = count * SECONDS_PER_SHOT;
       logger.warn(
-        { projectId, episodeNumber: ep, sceneCount: count },
-        `[director] episode ${ep} has ${count} scenes > 6 — each scene gets < 2 shots`,
+        { projectId, episodeNumber: ep, sceneCount: count, targetSeconds: SHOTS_PER_EPISODE * SECONDS_PER_SHOT, actualSeconds: actualTotal },
+        `[director] episode ${ep}: ${count} scenes × ${SECONDS_PER_SHOT}s minimum = ${actualTotal}s, exceeds ${SHOTS_PER_EPISODE * SECONDS_PER_SHOT}s target. Consider merging scenes or splitting episode.`,
       );
     }
   }
@@ -171,7 +173,7 @@ export async function runEcpStoryboardForProject(projectId: string): Promise<voi
         visualPrompt: c.visualPrompt || undefined,
       })),
       model: textModel as any,
-      narrativeStyle: narrativeStyle as "THIRD_PERSON" | "FIRST_PERSON",
+      narrativeStyle: narrativeStyle as "THIRD_PERSON" | "FIRST_PERSON" | "NOVEL_VO",
       language: project.language,
       targetShotsForThisScene: targetShotsForScene(scene.episodeNumber),
     });

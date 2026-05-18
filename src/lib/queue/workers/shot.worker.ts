@@ -306,26 +306,34 @@ export const shotWorker = new Worker(
     const loc = shot.scene.location;
     const timeOfDay = shot.scene.timeOfDay ? ` · ${shot.scene.timeOfDay}` : "";
 
-    // 第一人称旁白：若 videoPrompt 里包含旁白文字（[PRODUCTION NOTES] 或独立旁白段落），
-    // 单独提取并标注为画外音解说，让 Seedance 以 V.O. 口吻生成主观镜头+同期声。
+    // 旁白模式：根据 narrativeStyle 决定旁白类型和镜头风格
     const narrativeLabel = isZh ? "# 旁白风格：" : "# Narration style:";
     const narrativeValue = narrativeStyle === "FIRST_PERSON"
       ? isZh
         ? "第一人称主观视角（POV）。观众即主角。画面须以主观手持跟拍或 POV 镜头呈现，同期声包含主角低沉的内心独白旁白（画外音 V.O.），语速舒缓、情绪克制、带气息感。禁止出现主角正脸直视镜头（除非剧本明确要求）。"
         : "First-person subjective POV. Viewer IS the protagonist. Use handheld POV or first-person camera. Include protagonist's quiet internal monologue as voice-over (V.O.) in the same-source audio, slow pace, restrained emotion, breathy tone. Avoid protagonist facing camera directly unless script demands it."
-      : isZh ? "第三人称电影叙事，多机位客观覆盖。" : "Third-person cinematic narration, objective multi-angle coverage.";
-
-    // 若是第一人称且 videoPrompt 里有明显的旁白文字，提取出来强化标注
+      : narrativeStyle === "NOVEL_VO"
+        ? isZh
+          ? "第三人称电影叙事，多机位客观覆盖。配以小说式旁白（画外音 V.O.），以文学朗读风格讲述场景与情节，语速舒缓、叙述性强，类似有声小说。画面如同「说书人在讲故事时同步演出的情景」，角色沉浸在自己的世界里，不直视镜头。"
+          : "Third-person cinematic narration, objective multi-angle coverage. Accompanied by novel-style voice-over (V.O.) in literary reading style — calm pace, narrative tone, like an audiobook brought to life with live-action visuals. Characters inhabit their own world, never acknowledging the camera."
+        : isZh ? "第三人称电影叙事，多机位客观覆盖。" : "Third-person cinematic narration, objective multi-angle coverage.";
+    
+    // 提取旁白文字（支持第一人称内心独白和小说旁白两种模式）
     let voiceoverBlock = "";
-    if (narrativeStyle === "FIRST_PERSON" && motionFromTable) {
+    if ((narrativeStyle === "FIRST_PERSON" || narrativeStyle === "NOVEL_VO") && motionFromTable) {
       // 匹配 [PRODUCTION NOTES] 段落或「旁白：」「V.O.:」等标记后的文字
       const voMatch = motionFromTable.match(
         /(?:\[PRODUCTION NOTES\]|旁白[：:：]|V\.O\.[：:：]?|画外音[：:：]?)([\s\S]*?)(?:\n\[|\n#|$)/i,
       );
       if (voMatch && voMatch[1]?.trim()) {
-        voiceoverBlock = isZh
-          ? `\n# 画外音旁白（第一人称 V.O.，须出现在同期声中）：\n${voMatch[1].trim()}`
-          : `\n# Voice-over narration (first-person V.O., must appear in diegetic audio):\n${voMatch[1].trim()}`;
+        const voLabel = narrativeStyle === "NOVEL_VO"
+          ? isZh
+            ? "小说旁白（第三人称 V.O.，画外音朗读，同期声输出）"
+            : "Novel narration (third-person V.O., voice-over reading, diegetic audio)"
+          : isZh
+            ? "画外音旁白（第一人称 V.O.，须出现在同期声中）"
+            : "Voice-over narration (first-person V.O., must appear in diegetic audio)";
+        voiceoverBlock = `\n# ${voLabel}：\n${voMatch[1].trim()}`;
       }
     }
 

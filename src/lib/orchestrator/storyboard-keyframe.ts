@@ -1,6 +1,6 @@
 /**
  * Prompt helpers for ECP storyboard keyframe images (wording only).
- * 分镜表图固定为多格真人制片板；该图作为视频生成的首张参考图（见 shot.worker）。
+ * 分镜表图固定为多格手绘动画故事板（含角色选角面板与制作笔记区）；该图作为视频生成的首张参考图（见 shot.worker）。
  * Part 1 完整锁来自仓库根目录 `prompts/part1-storyboard.{zh,en}.md`。
  */
 
@@ -23,8 +23,8 @@ export function storyboardKeyframeNegative(lang: string, imagePrompt?: string): 
       : "anime or chibi characters, 3d cartoon render, game UI, webcomic speech bubbles, low quality, unrelated objects, noisy framing, off-model noise, modern objects, software screenshot, NLE timeline";
   }
   return lang === "zh"
-    ? "动漫化角色，Q版人物，三渲二卡通，游戏引擎渲染，条漫对话框，潮流插画-only人物，低画质，畸形，无关物体，现代物体，水彩，铅笔素描，软件截图，NLE时间线，界面UI，多余手指，畸形手部"
-    : "anime or chibi characters, 3d cartoon render, game engine toon, webcomic speech bubbles, illustration-only cast, low quality, deformed, unrelated objects, modern objects, watercolor, pencil sketch, software screenshot, NLE timeline, UI overlay, extra fingers, deformed hands";
+    ? "动漫化角色，Q版人物，三渲二卡通，游戏引擎渲染，条漫对话框，潮流插画-only人物，低画质，畸形，无关物体，现代物体，软件截图，NLE时间线，界面UI，多余手指，畸形手部"
+    : "anime or chibi characters, 3d cartoon render, game engine toon, webcomic speech bubbles, illustration-only cast, low quality, deformed, unrelated objects, modern objects, software screenshot, NLE timeline, UI overlay, extra fingers, deformed hands";
 }
 
 export function storyboardKeyframeUserPrompt(imagePrompt: string, lang: string): string {
@@ -34,8 +34,8 @@ export function storyboardKeyframeUserPrompt(imagePrompt: string, lang: string):
   try {
     return loadPromptTemplate(file, { LOCK_TEXT: body });
   } catch {
-    const fallbackZh = `【分镜表图 · 真人多格制片板】\n${body}`;
-    const fallbackEn = `[Storyboard panel · live-action sheet]\n${body}`;
+    const fallbackZh = `【分镜表图 · 手绘动画多格故事板 + 角色选角 + 制作笔记】\n${body}`;
+    const fallbackEn = `[Storyboard sheet · hand-drawn animation 12-panel + character casting + production notes]\n${body}`;
     return locale === "zh" ? fallbackZh : fallbackEn;
   }
 }

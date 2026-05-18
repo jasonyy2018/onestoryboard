@@ -1,47 +1,57 @@
 # Part 1 · Storyboard previz sheet (image model lock)
 
-Generate **one** photoreal cinematic **storyboard / previz sheet** still.
-This sheet covers ~**15 seconds** of continuous in-world action, presented as **12 panels** (4×3 grid) in chronological order from beat 1 to beat 12.
+Generate **one** hand-drawn animation storyboard / previz sheet still on cream/off-white paper.
+This sheet covers ~**15 seconds** of continuous in-world action, presented as **12 numbered panels** (4×3 grid) in chronological order from shot 1 to shot 12, with a character design casting panel on the right and production notes at the bottom.
 
 ## Visual Style (strictly enforced)
 
-Live-action cinematic quality, photorealism, film-grade lighting, realistic human skin textures, historically accurate wardrobe and architecture, film grain, Hollywood production-board aesthetics, concept art quality.
-**Prohibited**: cartoon, anime, illustration, watercolor, pencil sketch, toon-shading, game engine render.
+Hand-drawn mixed-media storyboard aesthetic on cream/off-white paper. Professional pre-production document feel. Clean white background with slight paper texture. Mixed media: loose graphite/pencil sketches for scene content, thin red ink border frames, blue pencil/digital arrow annotations, and photorealistic 3D-rendered Pixar-style character portraits inset for casting reference.
+**Important**: Each panel's pencil-sketch content depicts **live-action cinematic scenes** — real human proportions, authentic blocking, film-grade lighting and lensing, rendered in a storyboard artist's sketch style. The panels are pre-production drawings of a live-action film, not animated frames.
+**Prohibited**: cartoon, anime, chibi, game engine render, solid-color digital fills, full photographic rendering of panels, software UI screenshots.
 
-## Layout — 12-panel grid (strictly enforced)
+## Layout (strictly enforced)
 
-- Divide the full frame into **3 columns × 4 rows = 12** clean panels in a vertical portrait layout (9:16 orientation); crisp alignment.
-- **Every panel must use vertical 9:16 framing**, matching the short-drama portrait delivery spec.
-- **Each panel = ~1–2 seconds of narrative beat**, left-to-right, top-to-bottom: panel 1 (second 1) → panel 12 (second 15).
-- **Every panel must be photoreal live-action**: real human skin and proportions, real wardrobe and locations, cinematic lighting and lenses; NO anime, illustration, or toon-shading.
-- Secondary graphic layers (over cells or margins): camera/movement arrows, lens labels (CU/MS/OTS), one-line shot description under each panel, emotion color strip.
-- All panels share the same cast look, environment, and lighting logic (same ~15s take).
+The page is divided into three main areas:
 
-## 12-Panel Beat Structure (derived from ECP lock text below)
+### Left (approx. two-thirds width) — 12-Panel Storyboard Grid
+- **4 rows × 3 columns = 12** numbered panels in chronological order (top-left to bottom-right)
+- **Title** at the top left in handwritten capital letters (e.g. "PROJECT TITLE — SCENE NAME, SHOTS 1.1.1 TO 1.1.12")
+- **Each panel** is framed with a thin red rectangle border — labeled in a legend as "CAMERA FRAMING"
+- **Each panel** contains loose pencil-sketch scenes of characters in action, with rough but readable blocking and expressions
+- **Blue arrows** throughout indicate "MOVEMENT BREATH ENERGY" — directional flow marks over and between panels
+- **Handwritten shot labels and action notes** appear beside each panel (e.g. "01 CLOSE-UP" + action description like "Inhale. Center. Calm mind.")
+- Labels: shot number, camera framing type (CLOSE-UP / MEDIUM / WIDE / OTS etc.), action/meditation note
 
-Decompose the ~15s action described in the ECP lock text into **12 sequential beat panels**:
-- Panels 1–3: Establish / open (environment, character entry)
-- Panels 4–6: Advance / interact (main action, emotional build)
-- Panels 7–9: Escalate / turn (dramatic peak or conflict)
-- Panels 10–12: Land / close (emotional resolution or suspense hook)
+### Right (approx. one-third width) — "CHARACTER DESIGN CASTING" Panel
+- A titled section with profiles for each of the **N casted characters** in the scene
+- **For each character**:
+  - Character name / role (e.g. "THE YOUNG CHEF") with a list of personality traits (e.g. "Focused. Disciplined. Mindful. Graceful.")
+  - A **pencil thumbnail sketch** of the character
+  - Beside it, a **photorealistic 3D-rendered Pixar-style portrait** of the character
+  - Caption: "Casting Reference: [Actor Name], Age: [range], Height: [height]"
 
-Every panel's content must come strictly from the ECP lock text; do not invent beats not implied by the text.
+### Bottom (full width) — Production Notes Sections
+Three boxed sections arranged horizontally:
+1. **"NOTES FLOW INTENTIONS"**: Breathing and movement philosophy — Inhale/Exhale rhythm, meditation-inspired direction notes
+2. **"CAMERA / STORY NOTES"**: Camera strategy notes — e.g. "Start close for intimacy. Open up for energy. Use low angles for fire power. End wide with harmony gratitude."
+3. **"COLOR PALETTE (Environmental Mood)"**: Five colored swatches in crosshatched pencil/crayon style with labels — Warm Fire (red-orange), Earthy Food (brown), Soft Steam (gray), Metal Kitchen (dark slate), Natural Herbs (sage green)
+4. **Bottom right**: "PAGE 1 OF 1"
 
 ## Camera Language
 
-Cinematic aerial, telescoping crane, Steadicam tracking, handheld realism, 35mm anamorphic widescreen, shallow depth of field (bokeh), rack focus pull.
+Expressed through handwritten labels on panels: CU (Close-Up), MS (Medium Shot), WS (Wide Shot), LOW (Low Angle), PROFILE (Side Profile), TWO-SHOT. Arrow indicators for camera and character movement.
 
-## Color Script
+## Color Script (for the storyboard page itself)
 
-Derived from scene mood and time of day: warm sunrise gold, smoke-grey cool tone, dusty ochre, ink-blue mountains, blood-red accent, realistic skin tones. High contrast, gritty texture, desaturated palette.
+The storyboard page colors are from the pre-production document medium: cream paper background, graphite gray pencil lines, red ink for frame borders and labels, blue for movement arrows, and colored pencil/crayon swatches in the color palette section (red-orange, brown, gray, dark slate, sage green). The character casting portraits use full-color photorealistic rendering.
 
 ## Render Quality
 
-Ultra-detailed cinematic concept art, photoreal live-action previz quality, 8K resolution, realistic textures, professional film production board.
+Ultra-detailed mixed-media production storyboard: convincing paper texture, authentic pencil line variation, crisp red ink borders, readable handwritten text, high-resolution photorealistic character portraits inset seamlessly. Professional film pre-production document.
 
 ## Output goal
 
-- One high-resolution still, 12-panel grid, information-dense for strict image-to-video alignment.
+- One high-resolution still, 12-panel storyboard grid + character casting panel + production notes, information-dense for strict image-to-video alignment.
 - Do NOT make NLE timelines, software UIs, or desktop screenshots the dominant subject.
 
 ---

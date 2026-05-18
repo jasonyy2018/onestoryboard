@@ -25,11 +25,25 @@ Structured Import Rules:
 - All content after [[EPISODE 1]] belongs to episode 1, until [[EPISODE 2]] appears.
 - Use the provided episode/chapter numbers in the "episodeNumber" field.
 
-Conventions:
+## Conventions (both formats supported as input):
+
+### Standard screenplay (EXT./INT.):
 - Scenes start with EXT./INT./EST. headers.
 - Characters are sometimes prefixed with @NAME (uppercase).
 - Props are sometimes prefixed with #NAME (uppercase).
 - Dialogue is shown after a centered character name in caps.
+
+### Chinese screenplay format:
+- Scene headers like "场1-1夜/内" (scene 1-1 night/interior), "场1-1日/外", "场1-1-闪夜/外" (flashback).
+- "主要人物：" lists main characters in the scene.
+- "△" introduces action descriptions.
+- "【字幕：】" marks on-screen subtitles/text.
+- "【闪回】" / "【闪回结束】" mark flashback sections.
+- "角色名：对白" or "角色名（情绪）：对白" for dialogue.
+- Voice-over marked as "角色名（画外音）：" or "(V.O.)".
+- Radio/comm marked as "角色名（通讯器音）：".
+
+Rule: The scriptText field must preserve the FULL original scene text, including the scene header, △ actions, dialogue, subtitles, flashback markers, everything.
 
 Be precise. Do not hallucinate scenes. Use the order they appear in the source.
 
@@ -58,11 +72,25 @@ const PARSER_CORE_ZH = `你是编剧助理。
 - [[EPISODE 1]] 之后直至 [[EPISODE 2]] 出现前的内容均属第 1 集。
 - 在字段 episodeNumber 中写入正确的集/章编号。
 
-体例：
+## 体例（同时支持以下两种输入格式）：
+
+### 标准剧本格式（EXT./INT.）：
 - 场次以 EXT./INT./EST. 抬头。
 - 角色名可带 @NAME（大写）前缀。
 - 道具可带 #NAME（大写）前缀。
 - 对白在居中的大写角色名之后书写。
+
+### 中文剧本格式：
+- 场次以「场X-X夜/内」「场X-X日/外」「场X-X-闪夜/外」等抬头。
+- 「主要人物：」列出本场角色。
+- 「△」引导动作描述。
+- 「【字幕：】」标记屏幕文字。
+- 「【闪回】」「【闪回结束】」标记闪回段落。
+- 「角色名：对白」或「角色名（情绪）：对白」标记对白。
+- 画外音标记为「角色名（画外音）：」。
+- 通讯器/画外标记为「角色名（通讯器音）：」等括号标注。
+
+规则：scriptText 字段必须**完整保留原场次全文**，包括场次抬头、△动作、对白、字幕、闪回标记等全部内容。
 
 务必精确，禁止凭空增加场次。严格保持原文顺序。
 

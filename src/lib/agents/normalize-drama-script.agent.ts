@@ -82,25 +82,13 @@ export async function normalizeDramaScript(
     model,
   });
 
-  // Update Scene records with normalized descriptions
-  for (let i = 0; i < result.scenes.length; i++) {
-    const ns = result.scenes[i]!;
-    const existingScene = project.scenes[i];
-    if (existingScene) {
-      await db.scene.update({
-        where: { id: existingScene.id },
-        data: {
-          scriptText: ns.description.includes(existingScene.location)
-            ? ns.description
-            : `${existingScene.location}。${ns.description}`,
-        },
-      });
-    }
-  }
+  // 注意：不再覆盖 scene.scriptText，保留原始剧本/小说文本作为后续 storyboard 的权威来源。
+  // 规范化描述仅通过返回值输出，调用方可自行决定是否使用。
+  // 原始 scriptText 不变，确保 storyboard 各阶段忠于原文。
 
   logger.info(
     { projectId, episode: episodeNumber, scenes: result.scenes.length },
-    "[normalize-drama-script] normalization complete",
+    "[normalize-drama-script] normalization complete (original scriptText preserved)",
   );
 
   return result;

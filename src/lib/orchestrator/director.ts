@@ -22,7 +22,7 @@ import { projectLocale } from "@/lib/i18n/project-ui";
  * 文件级状态检测：通过检查数据库记录判断当前阶段
  * 参考 ArcReel 的文件系统状态检测模式，使用 DB 替代文件系统
  */
-async function ensureTranslatedRawScript(
+export async function ensureTranslatedRawScript(
   projectId: string,
   rawScript: string,
   language: string,

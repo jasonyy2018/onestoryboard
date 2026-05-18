@@ -13,7 +13,7 @@ import {
 } from "./assets";
 import { filterSensitiveWords } from "./safety";
 import { runPool } from "./pipeline-concurrency";
-import { runEcpStoryboardForProject } from "./director";
+import { runEcpStoryboardForProject, ensureTranslatedRawScript } from "./director";
 import { fanoutAssetsAndCompose } from "@/lib/queue/flows";
 import { dispatchPipeline } from "@/lib/queue/flows";
 
@@ -216,8 +216,16 @@ export async function runSeriesEpisodePipeline(projectId: string): Promise<void>
     data: { pipelineStage: "PARSING", status: "GENERATING", startedAt: new Date(), errorMessage: null },
   });
 
-  const parsed = await parseScript(
+  // Translate rawScript to match project language before parsing
+  const translatedRaw = await ensureTranslatedRawScript(
+    projectId,
     project.rawScript,
+    project.language,
+    textModel as any,
+  );
+
+  const parsed = await parseScript(
+    translatedRaw,
     1, // 每个 Project 只有 1 集
     project.language,
     textModel as any,

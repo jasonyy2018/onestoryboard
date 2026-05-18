@@ -115,6 +115,19 @@ export async function generateStructured<S extends ZodTypeAny>(args: {
       });
       const repaired = repairJSON(text);
       const parsed = JSON.parse(repaired);
+
+      if (Array.isArray(parsed)) {
+        // LLM returned an array. Try 1) parse it directly (if schema accepts array),
+        // then try 2) wrap under common keys for object schemas.
+        const result = args.schema.safeParse(parsed);
+        if (result.success) return result.data as z.infer<S>;
+        for (const key of ["scenes", "data", "items", "characters", "shots", "steps"]) {
+          const attempt = args.schema.safeParse({ episode: 1, [key]: parsed });
+          if (attempt.success) return attempt.data as z.infer<S>;
+        }
+        throw result.error;
+      }
+
       return args.schema.parse(parsed) as z.infer<S>;
     },
     { context: "text:doubao:structured", retries: 3, minTimeout: 2000 },

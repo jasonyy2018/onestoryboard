@@ -45,7 +45,8 @@ export function AppendEpisodeDialog({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center bg-black/60 p-4">
           <div className="my-8 w-full max-w-2xl rounded-2xl border border-border-subtle bg-bg-elevated shadow-2xl">
             {/* Dialog header */}
             <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
@@ -128,6 +129,7 @@ export function AppendEpisodeDialog({
             </form>
           </div>
         </div>
+      </div>
       )}
     </>
   );

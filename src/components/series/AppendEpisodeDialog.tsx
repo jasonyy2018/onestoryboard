@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, BookOpen, Film } from "lucide-react";
 import { appendEpisode } from "@/app/actions/series";
 
@@ -12,7 +13,12 @@ export function AppendEpisodeDialog({
   language: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [inputType, setInputType] = useState<"SCRIPT" | "NOVEL">("SCRIPT");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const isZh = language === "zh";
 
   const labels = {
@@ -44,7 +50,7 @@ export function AppendEpisodeDialog({
         {labels.trigger}
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center bg-black/60 p-4">
           <div className="my-8 w-full max-w-2xl rounded-2xl border border-border-subtle bg-bg-elevated shadow-2xl">
@@ -129,7 +135,8 @@ export function AppendEpisodeDialog({
             </form>
           </div>
         </div>
-      </div>
+      </div>,
+        document.body
       )}
     </>
   );

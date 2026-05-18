@@ -29,23 +29,22 @@ export async function dispatchPipeline(projectId: string) {
   if (!hasShots) {
     const jobId = `parse-${projectId}`;
     logger.info({ projectId, jobId }, "[dispatchPipeline] enqueue parse-and-storyboard");
-    try {
-      await flowProducer.add({
-        name: "parse-and-storyboard",
-        queueName: QUEUE_NAMES.parse,
-        data: { projectId },
-        opts: {
-          jobId,
-          attempts: 3,
-          backoff: { type: "exponential", delay: 2000 },
-          removeOnComplete: true,
-          removeOnFail: 1000,
-        },
-      });
-    } catch (err) {
-      // Duplicate job id while parse is already queued / active — safe to ignore.
-      logger.warn({ projectId, err }, "[dispatchPipeline] parse job add skipped (likely duplicate)");
-    }
+
+    // Remove stale failed parse job so retry isn't silently blocked by jobId dedup
+    await queues.parse.remove(jobId).catch(() => {});
+
+    await flowProducer.add({
+      name: "parse-and-storyboard",
+      queueName: QUEUE_NAMES.parse,
+      data: { projectId },
+      opts: {
+        jobId,
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: true,
+        removeOnFail: 1000,
+      },
+    });
     return;
   }
 

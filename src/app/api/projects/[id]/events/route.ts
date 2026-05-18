@@ -18,22 +18,48 @@ export async function GET(
 ) {
   const { id: projectId } = await params;
 
+  let controller: ReadableStreamDefaultController<Uint8Array>;
+  const encoder = new TextEncoder();
+  let closed = false;
+  let interval: ReturnType<typeof setInterval>;
+  type Handler = { q: (typeof events)[QueueName]; onProgress: (args: { jobId: string; data: unknown }) => void; onCompleted: (args: { jobId: string }) => void; onFailed: (args: { jobId: string; failedReason: string }) => void };
+  let handlers: Handler[] = [];
+
+  function cleanup() {
+    clearInterval(interval);
+    for (const h of handlers) {
+      h.q.off("progress", h.onProgress);
+      h.q.off("completed", h.onCompleted);
+      h.q.off("failed", h.onFailed);
+    }
+  }
+
+  const send = (event: string, data: unknown) => {
+    if (closed) return;
+    try {
+      controller.enqueue(
+        encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
+      );
+    } catch {
+      closed = true;
+      cleanup();
+    }
+  };
+
+  function safeClose() {
+    if (closed) return;
+    closed = true;
+    cleanup();
+    try {
+      controller.close();
+    } catch {
+      // Controller already closed — ignore
+    }
+  }
+
   const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
-      let closed = false;
-      const send = (event: string, data: unknown) => {
-        if (closed) return;
-        try {
-          controller.enqueue(
-            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
-          );
-        } catch {
-          // Controller already closed — mark and stop
-          closed = true;
-          cleanup();
-        }
-      };
+    async start(c) {
+      controller = c;
 
       // 1) initial snapshot
       const snapshot = await db.project.findUnique({
@@ -50,7 +76,7 @@ export async function GET(
 
       // 2) live BullMQ events (queues actually registered in queues.ts).
       const queueNames = Object.keys(events) as QueueName[];
-      const handlers = queueNames.map((qn) => {
+      handlers = queueNames.map((qn) => {
         const q = events[qn];
         const onProgress = ({ jobId, data }: { jobId: string; data: unknown }) => {
           send("progress", { queue: qn, jobId, data });
@@ -68,7 +94,7 @@ export async function GET(
       });
 
       // 3) periodic DB poll — only push snapshot when pipeline / shots actually changed
-      const interval = setInterval(async () => {
+      interval = setInterval(async () => {
         const fresh = await db.project.findUnique({
           where: { id: projectId },
           include: {
@@ -85,22 +111,13 @@ export async function GET(
         }
         if (fresh?.status === "COMPLETED" || fresh?.status === "FAILED") {
           send("done", { status: fresh.status });
-          cleanup();
-          if (!closed) {
-            closed = true;
-            controller.close();
-          }
+          safeClose();
         }
       }, 3000);
-
-      function cleanup() {
-        clearInterval(interval);
-        for (const h of handlers) {
-          h.q.off("progress", h.onProgress);
-          h.q.off("completed", h.onCompleted);
-          h.q.off("failed", h.onFailed);
-        }
-      }
+    },
+    cancel() {
+      closed = true;
+      cleanup();
     },
   });
 

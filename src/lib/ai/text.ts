@@ -25,6 +25,7 @@ async function callDoubao(args: {
         { role: "user", content: args.prompt },
       ],
       temperature: args.temperature ?? 0.7,
+      max_tokens: 8192,
     }),
     signal: AbortSignal.timeout(300000),
   });

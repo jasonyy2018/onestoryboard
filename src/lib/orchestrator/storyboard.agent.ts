@@ -96,6 +96,7 @@ Example structure (NOT literal — adapt to the scene):
 - charactersInShot: array of character names (no @ prefix)
 
 CRITICAL: Return ONLY valid JSON. Keys: "shots", per shot: "sceneOrder", "shotOrder", "type", "cameraMove", "duration", "imagePrompt", "videoPrompt", "charactersInShot".
+Your output must be a **complete, parseable JSON object** — do not truncate. Be concise but fully describe each shot.
 `;
 
 const STORYBOARD_SYSTEM_ZH = `你是真人写实短剧的 AI 导演。
@@ -194,6 +195,7 @@ const STORYBOARD_SYSTEM_ZH = `你是真人写实短剧的 AI 导演。
 - charactersInShot：姓名数组（不带 @ 前缀）
 
 关键：只输出合法 JSON。键名："shots"、"sceneOrder"、"shotOrder"、"type"、"cameraMove"、"duration"、"imagePrompt"、"videoPrompt"、"charactersInShot"。
+你的输出必须是**完整的、可解析的 JSON 对象**——禁止截断。每镜描述要精确但避免冗余，确保全部输出完成。
 `;
 
 export async function generateStoryboard(args: {

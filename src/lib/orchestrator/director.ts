@@ -15,12 +15,63 @@ import { runPool } from "./pipeline-concurrency";
 import { analyzeAssets } from "@/lib/agents/analyze-assets.agent";
 import { normalizeDramaScript } from "@/lib/agents/normalize-drama-script.agent";
 import { createEpisodeScript } from "@/lib/agents/create-episode-script.agent";
-import type { TextModelKey } from "@/lib/ai/text";
+import { generatePlainText, type TextModelKey } from "@/lib/ai/text";
+import { projectLocale } from "@/lib/i18n/project-ui";
 
 /**
  * 文件级状态检测：通过检查数据库记录判断当前阶段
  * 参考 ArcReel 的文件系统状态检测模式，使用 DB 替代文件系统
  */
+async function ensureTranslatedRawScript(
+  projectId: string,
+  rawScript: string,
+  language: string,
+  model: TextModelKey,
+): Promise<string> {
+  const loc = projectLocale(language);
+  const isEn = loc === "en";
+
+  const maxChunkChars = 4000;
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < rawScript.length) {
+    let end = Math.min(start + maxChunkChars, rawScript.length);
+    if (end < rawScript.length) {
+      const boundary = rawScript.lastIndexOf("\n\n", end);
+      if (boundary > start + maxChunkChars / 2) end = boundary;
+    }
+    chunks.push(rawScript.slice(start, end));
+    start = end;
+  }
+
+  if (chunks.length === 1) {
+    const translated = await generatePlainText({
+      prompt: isEn
+        ? `Translate the following text into natural English. Preserve all structural markers ([[EPISODE X]], EXT./INT. headers, character names in caps, dialogue formatting). Do NOT change the structure, only translate the content.\n\n${rawScript}`
+        : `将以下文本翻译为自然的中文。保留所有结构标记（[[EPISODE X]]、EXT./INT. 抬头、大写角色名、对白格式等）。不要改变结构，仅翻译内容。\n\n${rawScript}`,
+      model,
+      temperature: 0.1,
+    });
+    await db.project.update({ where: { id: projectId }, data: { rawScript: translated } });
+    return translated;
+  }
+
+  const translatedChunks = await Promise.all(
+    chunks.map((chunk, i) =>
+      generatePlainText({
+        prompt: isEn
+          ? `Translate the following text (chunk ${i + 1}/${chunks.length}) into natural English. Preserve all structural markers.\n\n${chunk}`
+          : `将以下文本（第 ${i + 1}/${chunks.length} 段）翻译为自然的中文。保留所有结构标记。\n\n${chunk}`,
+        model,
+        temperature: 0.1,
+      }),
+    ),
+  );
+  const translated = translatedChunks.join("\n\n");
+  await db.project.update({ where: { id: projectId }, data: { rawScript: translated } });
+  return translated;
+}
+
 export type PipelineStage =
   | "IDLE"
   | "PARSING"
@@ -324,8 +375,16 @@ export async function runParseAndStoryboard(projectId: string) {
 
       logger.info({ projectId }, "[director] parse start");
 
-      const parsed = await parseScript(
+      // Translate rawScript to match project language before parsing
+      const translatedRaw = await ensureTranslatedRawScript(
+        projectId,
         project.rawScript,
+        project.language,
+        textModel as TextModelKey,
+      );
+
+      const parsed = await parseScript(
+        translatedRaw,
         project.episodeCount,
         project.language,
         textModel as TextModelKey,

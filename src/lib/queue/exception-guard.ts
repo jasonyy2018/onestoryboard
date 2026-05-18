@@ -1,10 +1,12 @@
 import { logger } from "@/lib/logger";
 
 function isBullMQAbortNoise(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as Record<string, unknown>;
   return (
-    err instanceof TypeError &&
-    (err as any).code === "ERR_INVALID_STATE" &&
-    (err as Error).message.includes("Controller is already closed")
+    e.code === "ERR_INVALID_STATE" &&
+    typeof e.message === "string" &&
+    (e.message as string).includes("Controller is already closed")
   );
 }
 

@@ -117,15 +117,16 @@ export async function generateStructured<S extends ZodTypeAny>(args: {
       const parsed = JSON.parse(repaired);
 
       if (Array.isArray(parsed)) {
-        // LLM returned an array. Try 1) parse it directly (if schema accepts array),
-        // then try 2) wrap under common keys for object schemas.
-        const result = args.schema.safeParse(parsed);
-        if (result.success) return result.data as z.infer<S>;
+        // Zod v4 safeParse can throw; use try-catch.
+        try {
+          return args.schema.parse(parsed) as z.infer<S>;
+        } catch {}
         for (const key of ["scenes", "data", "items", "characters", "shots", "steps"]) {
-          const attempt = args.schema.safeParse({ episode: 1, [key]: parsed });
-          if (attempt.success) return attempt.data as z.infer<S>;
+          try {
+            return args.schema.parse({ episode: 1, [key]: parsed }) as z.infer<S>;
+          } catch {}
         }
-        throw result.error;
+        throw new Error("LLM returned array; schema expects object — none of the fallback keys matched");
       }
 
       return args.schema.parse(parsed) as z.infer<S>;

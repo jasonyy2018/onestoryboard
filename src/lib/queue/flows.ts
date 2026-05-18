@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { flowProducer, QUEUE_NAMES, queues } from "./queues";
+import { ensureTranslatedRawScript } from "@/lib/orchestrator/director";
 
 /**
  * Entry point invoked by /api/projects/[id]/generate.
@@ -32,6 +33,12 @@ export async function dispatchPipeline(projectId: string) {
 
     // Remove stale failed parse job so retry isn't silently blocked by jobId dedup
     await queues.parse.remove(jobId).catch(() => {});
+
+    // Translate rawScript to match project language immediately at creation time
+    const textModel = ((project.modelConfig as Record<string, unknown>)?.textModel as string) || undefined;
+    await ensureTranslatedRawScript(projectId, project.rawScript, project.language, textModel as any).catch((err) =>
+      logger.warn({ projectId, err }, "[dispatchPipeline] translation skipped"),
+    );
 
     await flowProducer.add({
       name: "parse-and-storyboard",

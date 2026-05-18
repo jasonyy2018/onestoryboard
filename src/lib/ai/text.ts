@@ -66,6 +66,39 @@ async function callDoubao(args: {
   return text.trim();
 }
 
+function repairJSON(raw: string): string {
+  let text = raw.trim();
+
+  try { JSON.parse(text); return text; } catch {}
+
+  // Fix trailing commas before closing brackets/braces
+  text = text.replace(/,(\s*[}\]])/g, "$1");
+  try { JSON.parse(text); return text; } catch {}
+
+  // Fix unquoted object keys
+  text = text.replace(/(\{|,)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+  try { JSON.parse(text); return text; } catch {}
+
+  // Fix unterminated final string value
+  const unclosed = text.match(/:\s*"((?:[^"\\]|\\.)*)$/);
+  if (unclosed) {
+    text += '"';
+    try { JSON.parse(text); return text; } catch {}
+  }
+
+  // Strip non-JSON prefix/suffix heuristically
+  const braceStart = text.indexOf("{");
+  const braceEnd = text.lastIndexOf("}");
+  if (braceStart !== -1 && braceEnd > braceStart) {
+    const inner = text.slice(braceStart, braceEnd + 1);
+    try { JSON.parse(inner); return inner; } catch {}
+  }
+
+  throw new SyntaxError(
+    `Unrepairable JSON from LLM.\nFirst 600 chars: ${raw.slice(0, 600)}\nLast 200 chars: ${raw.slice(-200)}`,
+  );
+}
+
 export async function generateStructured<S extends ZodTypeAny>(args: {
   schema: S;
   prompt: string;
@@ -80,7 +113,8 @@ export async function generateStructured<S extends ZodTypeAny>(args: {
         system: args.system,
         temperature: args.temperature,
       });
-      const parsed = JSON.parse(text);
+      const repaired = repairJSON(text);
+      const parsed = JSON.parse(repaired);
       return args.schema.parse(parsed) as z.infer<S>;
     },
     { context: "text:doubao:structured", retries: 3, minTimeout: 2000 },

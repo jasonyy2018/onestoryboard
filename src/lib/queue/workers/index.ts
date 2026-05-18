@@ -16,6 +16,14 @@ logger.info(
   "Onestoryboard workers online",
 );
 
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "[worker] uncaughtException — keeping process alive");
+});
+
+process.on("unhandledRejection", (err) => {
+  logger.error({ err }, "[worker] unhandledRejection — keeping process alive");
+});
+
 async function shutdown() {
   logger.info("Shutting down workers...");
   await Promise.all(workers.map((w) => w.close()));

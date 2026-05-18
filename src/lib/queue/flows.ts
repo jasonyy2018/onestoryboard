@@ -36,6 +36,8 @@ export async function dispatchPipeline(projectId: string) {
         data: { projectId },
         opts: {
           jobId,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 2000 },
           removeOnComplete: true,
           removeOnFail: 1000,
         },
@@ -100,7 +102,11 @@ export async function fanoutAssetsAndCompose(projectId: string) {
     name: `shot-${shot.id}`,
     queueName: QUEUE_NAMES.shot,
     data: { shotId: shot.id, projectId },
-    opts: { jobId: `shot-${shot.id}` },
+    opts: {
+      jobId: `shot-${shot.id}`,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 2000 },
+    },
   }));
 
   const children: any[] = [...shotChildren];
@@ -109,11 +115,13 @@ export async function fanoutAssetsAndCompose(projectId: string) {
     name: `compose-${projectId}`,
     queueName: QUEUE_NAMES.compose,
     data: { projectId },
-    opts: { 
-      jobId: `compose-${projectId}`,
-      removeOnComplete: true,
-      removeOnFail: 1000
-    },
+      opts: { 
+        jobId: `compose-${projectId}`,
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: true,
+        removeOnFail: 1000
+      },
     children,
   });
 }

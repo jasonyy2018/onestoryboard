@@ -16,11 +16,22 @@ logger.info(
   "Onestoryboard workers online",
 );
 
+function isBullMQAbortNoise(err: unknown): boolean {
+  return (
+    err instanceof TypeError &&
+    (err as any).code === "ERR_INVALID_STATE" &&
+    err.message.includes("Controller is already closed")
+  );
+}
+
 process.on("uncaughtException", (err) => {
+  // BullMQ 5.x internal AbortController double-abort — safe to ignore
+  if (isBullMQAbortNoise(err)) return;
   logger.error({ err }, "[worker] uncaughtException — keeping process alive");
 });
 
 process.on("unhandledRejection", (err) => {
+  if (isBullMQAbortNoise(err)) return;
   logger.error({ err }, "[worker] unhandledRejection — keeping process alive");
 });
 

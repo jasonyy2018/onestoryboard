@@ -1,3 +1,4 @@
+import "./exception-guard";
 import { FlowProducer, Queue, QueueEvents } from "bullmq";
 import { createBullConnection } from "./connection";
 

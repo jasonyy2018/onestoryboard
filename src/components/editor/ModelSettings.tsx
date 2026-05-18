@@ -26,7 +26,7 @@ export function ModelSettings({ projectId, currentConfig, episodeCount, language
       await updateModelConfig(projectId, {
         ...(currentConfig || {}),
         episodeCount: epCount,
-        language: "zh",
+        language,
         textModel: "doubao-seed-2-0",
         imageModel: "tencent-og-medium",
         storyboardImageModel: "tencent-og-medium",

@@ -184,26 +184,49 @@ export const shotWorker = new Worker(
       const aspect = storyboardKeyframeAspectRatio(config.aspectRatio as string | undefined);
       const refForKeyframe = keyframeRefUrls(shot);
 
-      const imgRes = await generateImage(
-        {
-          prompt: keyPrompt,
-          negativePrompt: negative,
-          refImageUrls: refForKeyframe.length > 0 ? refForKeyframe : undefined,
-          aspectRatio: aspect,
-          size: "2K",
-          n: 1,
-        },
-        imageModelKey,
-      );
+      const MAX_KEYFRAME_RETRIES = 3;
+      let persistedKey: string | null = null;
+      let imgRes: Awaited<ReturnType<typeof generateImage>> | undefined;
+      for (let kfAttempt = 1; kfAttempt <= MAX_KEYFRAME_RETRIES; kfAttempt++) {
+        if (kfAttempt > 1) {
+          log.warn({ attempt: kfAttempt }, "[shot-worker] retrying keyframe generation");
+          await new Promise((r) => setTimeout(r, 2000));
+        }
 
-      if (!imgRes.url) throw new Error("Storyboard keyframe generation returned no URL");
+        imgRes = await generateImage(
+          {
+            prompt: keyPrompt,
+            negativePrompt: negative,
+            refImageUrls: refForKeyframe.length > 0 ? refForKeyframe : undefined,
+            aspectRatio: aspect,
+            size: "2K",
+            n: 1,
+          },
+          imageModelKey,
+        );
 
-      const imgBuf = await fetchAsBuffer(imgRes.url);
-      const persistedKey = await persistAsset({
-        key: `projects/${projectId}/shots/${shotId}-keyframe.jpg`,
-        data: imgBuf,
-        contentType: "image/jpeg",
-      });
+        if (!imgRes.url) throw new Error("Storyboard keyframe generation returned no URL");
+
+        try {
+          const imgBuf = await fetchAsBuffer(imgRes.url);
+          persistedKey = await persistAsset({
+            key: `projects/${projectId}/shots/${shotId}-keyframe.jpg`,
+            data: imgBuf,
+            contentType: "image/jpeg",
+          });
+          break;
+        } catch (fetchErr) {
+          const fm = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          const isExpired = fm.includes("403") || fm.includes("expire") || fm.includes("Expires");
+          if (isExpired && kfAttempt < MAX_KEYFRAME_RETRIES) {
+            log.warn({ attempt: kfAttempt, err: fm }, "[shot-worker] keyframe URL expired, regenerating...");
+            continue;
+          }
+          throw fetchErr;
+        }
+      }
+
+      if (!persistedKey) throw new Error("Failed to persist storyboard keyframe after retries");
 
       storyboardKeyUrl = persistedKey;
 
@@ -212,16 +235,16 @@ export const shotWorker = new Worker(
         data: {
           imageUrl: persistedKey,
           status: "IMAGE_READY",
-          cost: { increment: imgRes.cost },
+          cost: { increment: imgRes?.cost ?? 0 },
         },
       });
       await db.project.update({
         where: { id: projectId },
-        data: { totalCost: { increment: imgRes.cost } },
+        data: { totalCost: { increment: imgRes?.cost ?? 0 } },
       });
 
       await job.updateProgress({ stage: "keyframe-done", percent: 35 });
-      log.info({ cost: imgRes.cost, url: persistedKey }, "[shot-worker] ✓ Part1 keyframe done");
+      log.info({ cost: imgRes?.cost ?? 0, url: persistedKey }, "[shot-worker] ✓ Part1 keyframe done");
     } else {
       log.info("[shot-worker] ✓ Part1 keyframe already exists, skipping image generation");
     }

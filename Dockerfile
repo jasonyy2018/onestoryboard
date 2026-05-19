@@ -40,6 +40,9 @@ COPY --from=builder /app/public ./public
 # Prisma schema（迁移用）
 COPY --from=builder /app/prisma ./prisma
 
+# Prisma CLI 配置（v7 必需）
+COPY --from=builder /app/prisma.config.ts ./
+
 # Worker 源码 + 完整 node_modules（含 tsx + Prisma 二进制）
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/node_modules ./node_modules

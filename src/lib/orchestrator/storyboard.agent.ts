@@ -32,6 +32,7 @@ Each prompt is a structured narrative description in Chinese (for Chinese projec
 - @NAME: same face, hair, wardrobe, body type, age as character sheet
 - Same emotional line across the scene unless script shows a change
 - Chinese projects: always specify East Asian (Chinese) facial features
+- English/Western projects: follow the character description for ethnicity — if characters are described with Western/Caucasian features, keep them consistent; do NOT default to East Asian features
 
 ### Scene Continuity
 - Same environment, key props across shots unless script moves
@@ -65,13 +66,13 @@ Example structure (NOT literal — adapt to the scene):
 ## Template structure for videoPrompt
 Write a structured prompt in the project's language describing ~15s of motion, using clear section headers:
 
-**Characters:** — For every character in the scene (including extras, background bystanders, unnamed crowd), provide a concise description: physical traits (build, face, eyes), clothing/uniform, posture, demeanor. Chinese projects MUST specify East Asian (Chinese) features. ALL characters (protagonist,配角, extras alike) must be East Asian — no Western/Caucasian faces allowed.
+**Characters:** — For every character in the scene (including extras, background bystanders, unnamed crowd), provide a concise description: physical traits (build, face, eyes), clothing/uniform, posture, demeanor. Chinese projects MUST specify East Asian (Chinese) features. ALL characters (protagonist,配角, extras alike) must be East Asian — no Western/Caucasian faces allowed. English/Western projects: follow each character's described ethnicity — if characters are Western/Caucasian keep them consistently so; do NOT default to East Asian features.
 
 **Environment:** — Setting, lighting, key props, atmosphere. Match the script's location and time of day.
 
 **Mood:** — Emotional tone, tension, power dynamics. 1-2 sentences.
 
-**Timeline:** — Segmented by timestamp with camera framing and action. Use natural beat divisions (not rigid 3-second chunks). Each segment format: "0:00-0:02 (Framing) Action description. Character appearance for everyone on screen (including background extras)." Chinese projects MUST describe East Asian features in every segment where ANY person appears.
+**Timeline:** — Segmented by timestamp with camera framing and action. Use natural beat divisions (not rigid 3-second chunks). Each segment format: "0:00-0:02 (Framing) Action description. Character appearance for everyone on screen (including background extras)." Chinese projects MUST describe East Asian features in every segment where ANY person appears. English/Western projects MUST describe the ethnicity specified in each character's description (Western/Caucasian where applicable) in every segment — do not default to East Asian features.
 
 Must chain after the previous row — reference the prior segment's ending position/action.
 
@@ -86,7 +87,7 @@ Example structure (NOT literal — adapt to the scene):
 - **Language**: imagePrompt and videoPrompt body text in the same language as the scene script
 - **NARRATION MODE - FIRST-PERSON**: Include protagonist internal monologue V.O. in videoPrompt. Prefix with "旁白 V.O.：" (Chinese) or "V.O.:" (English). Camera is subjective POV — protagonist's eyes.
 - **NARRATION MODE - NOVEL_VO**: Include third-person novel-style narrator V.O. in videoPrompt — prefix with "旁白 V.O.：" (Chinese) or "V.O.:" (English). The narrator reads scene description like an audiobook, calm and literary. Camera is first-person subjective POV (same as FIRST-PERSON). Include narrator text at the end of the videoPrompt under a "Narration:" section.
-- **CHARACTER ETHNICITY**: Chinese projects MUST specify East Asian (Chinese) features — strictly forbid Western/Caucasian
+- **CHARACTER ETHNICITY**: Chinese projects MUST specify East Asian (Chinese) features — strictly forbid Western/Caucasian. English/Western projects MUST follow each character's described ethnicity — if characters are Western/Caucasian, describe them as such; do NOT default to East Asian features.
 - **Storyboard page style**: hand-drawn mixed-media pre-production document (pencil sketches + red ink borders + blue arrows). **But the content within each panel depicts live-action cinematic scenes** — real human proportions, authentic blocking, film-grade lighting. Only the character casting portraits on the right panel are photorealistic Pixar-style 3D renders.
 - **The final video output remains live-action photorealistic** — the storyboard is a pre-production reference, not the final visual style.
 - **duration MUST be 15 for every shot**

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { generateImage } from "@/lib/ai/image";
+import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { coerceImageModelKey } from "@/lib/orchestrator/project-image-model";
 import { logger } from "@/lib/logger";
 
@@ -54,6 +55,15 @@ export async function triggerAssetIngestion({
   }, {
     delay: 5000,
   });
+}
+
+/**
+ * Download a provider URL (Tencent/OSS temporary) and re-persist to stable storage.
+ * Provider URLs expire (minutes/hours); persisted URLs are long-lived.
+ */
+async function persistProviderImage(url: string, key: string): Promise<string> {
+  const buf = await fetchAsBuffer(url);
+  return persistAsset({ key, data: buf, contentType: "image/jpeg" });
 }
 
 export async function generateCharacterReference(characterId: string, modelKey?: string) {
@@ -168,14 +178,26 @@ export async function generateCharacterReference(characterId: string, modelKey?:
     }
   }
   
-  const refImageUrl = res.url;
-  if (!refImageUrl)
+  const rawUrl = res.url;
+  if (!rawUrl)
     throw new Error(
       isChinese
         ? `未能为角色 ${char.name} 生成参考图：服务商未返回 URL。`
         : `Failed to generate character reference image for ${char.name}: Provider returned no URL.`,
     );
-  
+
+  // Persist provider URL → stable storage
+  const refImageUrl = await persistProviderImage(
+    rawUrl,
+    `projects/${char.projectId}/characters/${char.id}.jpg`,
+  ).catch(async (persistErr) => {
+    logger.warn(
+      { characterId, err: String(persistErr) },
+      "[assets] persistProviderImage failed — saving raw URL instead",
+    );
+    return rawUrl;
+  });
+
   await db.character.update({ where: { id: characterId }, data: { refImageUrl } });
 
   try {
@@ -221,14 +243,26 @@ export async function generateSceneReference(sceneId: string, modelKey?: string)
     imageModel,
   );
   
-  const refImageUrl = res.url;
-  if (!refImageUrl)
+  const rawUrl = res.url;
+  if (!rawUrl)
     throw new Error(
       isChinese
         ? `未能为场景「${scene.location}」生成参考图：服务商未返回 URL。`
         : `Failed to generate scene reference image for ${scene.location}: Provider returned no URL.`,
     );
-  
+
+  // Persist provider URL → stable storage
+  const refImageUrl = await persistProviderImage(
+    rawUrl,
+    `projects/${scene.projectId}/scenes/${scene.id}.jpg`,
+  ).catch(async (persistErr) => {
+    logger.warn(
+      { sceneId, err: String(persistErr) },
+      "[assets] persistProviderImage failed — saving raw URL instead",
+    );
+    return rawUrl;
+  });
+
   // Scene reference images are not ingested into Volcengine (no audit pipeline for scenes).
   await db.scene.update({
     where: { id: sceneId },
@@ -354,14 +388,26 @@ export async function generatePropReference(propId: string, modelKey?: string) {
     imageModel,
   );
   
-  const refImageUrl = res.url;
-  if (!refImageUrl)
+  const rawUrl = res.url;
+  if (!rawUrl)
     throw new Error(
       isChinese
         ? `未能为道具「${prop.name}」生成参考图：服务商未返回 URL。`
         : `Failed to generate prop reference image for ${prop.name}: Provider returned no URL.`,
     );
-  
+
+  // Persist provider URL → stable storage
+  const refImageUrl = await persistProviderImage(
+    rawUrl,
+    `projects/${prop.scene.projectId}/props/${prop.id}.jpg`,
+  ).catch(async (persistErr) => {
+    logger.warn(
+      { propId, err: String(persistErr) },
+      "[assets] persistProviderImage failed — saving raw URL instead",
+    );
+    return rawUrl;
+  });
+
   await db.prop.update({
     where: { id: propId },
     data: {

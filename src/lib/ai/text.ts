@@ -118,7 +118,27 @@ export async function generateStructured<S extends ZodTypeAny>(args: {
 
       if (Array.isArray(parsed)) {
         try {
-          return args.schema.parse(parsed) as z.infer<S>;
+      try {
+        return args.schema.parse(parsed) as z.infer<S>;
+      } catch {
+        // LLM returned object missing optional-ish fields (e.g. episode).
+        // Try filling common defaults before failing.
+        const fixed: Record<string, unknown> = { ...parsed };
+        if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+          if (!("episode" in parsed)) fixed.episode = 1;
+          if (!("scenes" in parsed) && "episode" in parsed) fixed.scenes = [];
+          if (!("characters" in parsed) && ("scenes" in parsed || "name" in parsed)) fixed.characters = [];
+        }
+        try {
+          return args.schema.parse(fixed) as z.infer<S>;
+        } catch {}
+        throw new Error(
+          `LLM returned object but schema validation failed. ` +
+          `Parsed keys: [${Object.keys(parsed as object).join(", ")}]. ` +
+          `Zod error: ${(args.schema.safeParse(parsed) as { error: { message: string } }).error.message.slice(0, 300)}` +
+          ` LLM preview: ${JSON.stringify(parsed).slice(0, 400)}`,
+        );
+      }
         } catch {}
         for (const key of ["scenes", "data", "items", "characters", "shots", "steps"]) {
           try {

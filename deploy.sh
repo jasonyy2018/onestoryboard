@@ -81,6 +81,12 @@ $COMPOSE up -d
 echo "⏳ 等待服务就绪..."
 sleep 15
 
+echo "🔄 运行 Prisma 生成客户端..."
+$COMPOSE exec -T app npx prisma generate || echo "⚠️  prisma generate 失败（可手动重试）"
+
+echo "🔄 同步数据库 Schema..."
+$COMPOSE exec -T app npx prisma db push || echo "⚠️  prisma db push 失败（可手动重试：npx prisma db push）"
+
 echo "✅ 部署完成！"
 echo ""
 echo "服务状态："

@@ -92,7 +92,13 @@ export const composeWorker = new Worker(
     log.info({ episodeCount: episodeFinals.length, totalDuration }, "[compose-worker] done");
     return { episodeFinals, primaryUrl, totalDuration };
   },
-  { connection: createBullConnection(), concurrency: 2 },
+  {
+    connection: createBullConnection(),
+    concurrency: 2,
+    lockDuration: 5 * 60 * 1000, // 5 min — compose can take 60+ seconds with FFmpeg
+    stalledInterval: 60 * 1000,
+    maxStalledCount: 2,
+  },
 );
 
 composeWorker.on("failed", async (job, err) => {

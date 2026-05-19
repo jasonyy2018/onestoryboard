@@ -125,8 +125,8 @@ export async function fanoutAssetsAndCompose(projectId: string) {
         jobId: `compose-${projectId}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 2000 },
-        removeOnComplete: true,
-        removeOnFail: 1000
+        removeOnComplete: { age: 3600 }, // keep for 1h so BullMQ flow finalization doesn't race with cleanup
+        removeOnFail: 1000,
       },
     children,
   });

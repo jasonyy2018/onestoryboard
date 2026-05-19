@@ -18,25 +18,21 @@ AbortController.prototype.abort = function patchedAbort(...args: Parameters<type
     origAbort.apply(this, args);
   } catch (err: unknown) {
     if (isBullMqAbortNoise(err)) {
-      // swallow — harmless race in BullMQ worker timeout lifecycle
       return;
     }
     throw err;
   }
 };
 
-// --- 2. Process-level guard (belt-and-suspenders) ---
-process.on("uncaughtException", (err) => {
-  // BullMQ × Node.js 22 竞态噪声：已由 AbortController 补丁处理，
-  // 但仍可能通过微任务/异步路径逃逸。直接静默，不在控制台输出。
+// --- 2. Process-level guard (prependListener ensures we run before any other handler) ---
+process.prependListener("uncaughtException", (err) => {
   if (isBullMqAbortNoise(err)) {
-    // harmless BullMQ × Node 22 race — no action needed
     return;
   }
   logger.error({ err }, "[exception-guard] uncaughtException");
 });
 
-process.on("unhandledRejection", (err) => {
+process.prependListener("unhandledRejection", (err) => {
   if (isBullMqAbortNoise(err)) return;
   logger.error({ err }, "[exception-guard] unhandledRejection");
 });

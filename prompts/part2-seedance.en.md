@@ -37,6 +37,10 @@ The final video **must never contain any text** — including but not limited to
 
 cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, clean clothes, deformed hands, extra fingers, grid lines, nine-box overlay, board watermarks, reference UI, picture-in-picture artifacts, **subtitles**, **on-screen text**, **dialogue captions**, **title text**, **burned-in text**.
 
+## Character appearance lock (strict)
+
+All on-screen characters must match their appearance description exactly — maintain consistent ethnicity, skin tone, facial features, hair color/style, body type, and costume. Do not alter or substitute character looks between shots or within a shot. Extras must blend with the lead characters' world without introducing conflicting ethnicities or period-anachronistic features.
+
 ## Deliverable lock
 
 In-world photoreal footage, continuous time/space; coverage must look like live on-set photography. **The output must never show storyboard grid lines, production board borders, reference image overlays, or any "photo of paper / screenshot" texture.** Every frame must be a real scene with real characters in motion.

@@ -353,7 +353,7 @@ export const shotWorker = new Worker(
 
     const rowScriptCore = isZh
       ? `# 场景：${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}${voiceoverBlock}\n\n# 角色外貌锁定（严格遵守，禁止替换为西方面孔）：\n${charactersPrompt}\n\n# 镜头运动：${shot.cameraMove || "平滑推拉，浅景深"}\n\n# 视频脚本（严格按节拍顺序执行）：\n${motionFromTable}`
-      : `# Scene: ${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}${voiceoverBlock}\n\n# Cast appearance lock (strictly follow, do not replace with Western faces):\n${charactersPrompt}\n\n# Camera: ${shot.cameraMove || "smooth push-pull, shallow DOF"}\n\n# Video script (execute in strict beat order):\n${motionFromTable}`;
+      : `# Scene: ${loc}${timeOfDay}\n${narrativeLabel}\n${narrativeValue}${voiceoverBlock}\n\n# Cast appearance lock (strictly follow character descriptions — do not alter ethnicity, facial features, or build):\n${charactersPrompt}\n\n# Camera: ${shot.cameraMove || "smooth push-pull, shallow DOF"}\n\n# Video script (execute in strict beat order):\n${motionFromTable}`;
 
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);

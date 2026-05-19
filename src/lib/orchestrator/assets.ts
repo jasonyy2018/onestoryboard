@@ -201,6 +201,7 @@ export async function generateCharacterReference(characterId: string, modelKey?:
   await db.character.update({ where: { id: characterId }, data: { refImageUrl } });
 
   try {
+    // Try persisted (local) URL first; if Volcengine can't access it, fall back to raw provider URL
     await triggerAssetIngestion({
       projectId: char.projectId,
       id: char.id,
@@ -208,15 +209,33 @@ export async function generateCharacterReference(characterId: string, modelKey?:
       url: refImageUrl,
     });
   } catch (ingestErr: unknown) {
-    logger.warn(
-      {
-        characterId,
-        characterName: char.name,
-        projectId: char.projectId,
-        err: ingestErr instanceof Error ? ingestErr.message : String(ingestErr),
-      },
-      "[assets] Volcengine CreateAsset failed — ref image URL is saved; retry audit later or check Volcengine status",
-    );
+    const ingestMsg = ingestErr instanceof Error ? ingestErr.message : String(ingestErr);
+    const isDownloadError = ingestMsg.includes("download") || ingestMsg.includes("timeout") || ingestMsg.includes("connect");
+    if (isDownloadError && rawUrl) {
+      logger.warn(
+        { characterId, characterName: char.name, projectId: char.projectId, err: ingestMsg },
+        "[assets] Volcengine ingestion failed with persisted URL — retrying with raw provider URL",
+      );
+      try {
+        await triggerAssetIngestion({
+          projectId: char.projectId,
+          id: char.id,
+          name: char.name,
+          url: rawUrl,
+        });
+        return refImageUrl;
+      } catch (fallbackErr) {
+        logger.error(
+          { characterId, err: String(fallbackErr) },
+          "[assets] Volcengine ingestion also failed with raw URL",
+        );
+      }
+    } else {
+      logger.warn(
+        { characterId, characterName: char.name, projectId: char.projectId, err: ingestMsg },
+        "[assets] Volcengine CreateAsset failed — ref image URL is saved; retry audit later or check Volcengine status",
+      );
+    }
   }
 
   return refImageUrl;

@@ -134,7 +134,10 @@ export async function generateVideo(input: VideoGenInput): Promise<VideoGenResul
     const isRefImageError =
       msg.includes("is not found") ||
       msg.includes("InputImageSensitiveContentDetected") ||
-      msg.includes("PrivacyInformation");
+      msg.includes("PrivacyInformation") ||
+      msg.includes("Failed to download image") ||
+      /download.*(?:fail|error|timeout)/i.test(msg) ||
+      /(?:image|ref).*timeout/i.test(msg);
 
     if (isRefImageError && (input.volcengineAssetIds?.length || input.refImageUrls?.length)) {
       console.warn("[video] reference image error, retrying without reference images:", msg.slice(0, 120));

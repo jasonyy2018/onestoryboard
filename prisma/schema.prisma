@@ -170,6 +170,7 @@ model Shot {
   duration    Int        @default(4)
   imageUrl    String?    // generated keyframe
   videoUrl    String?    // generated motion
+  lastFrameUrl String?   // Seedance return_last_frame — chained as first_frame of next shot
   status      ShotStatus @default(PENDING)
 
   volcengineAssetId String?      // 针对该分镜生成的资产 ID

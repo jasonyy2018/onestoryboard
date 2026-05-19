@@ -5,7 +5,7 @@ import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { coerceImageModelKey } from "@/lib/orchestrator/project-image-model";
 import { logger } from "@/lib/logger";
 
-import { createAsset, createAssetGroup, pollAssetStatus } from "@/lib/ai/volcengine-assets";
+import { createAsset, createAssetGroup, pollAssetStatus, ingestImageFromBuffer } from "@/lib/ai/volcengine-assets";
 import { queues } from "@/lib/queue/queues";
 import { scrubForExternalImageApi, scrubNegativeForExternalImageApi } from "@/lib/orchestrator/safety";
 import { textSuggestsUndeadOrSfxMakeup } from "@/lib/orchestrator/character-tone";
@@ -186,56 +186,46 @@ export async function generateCharacterReference(characterId: string, modelKey?:
         : `Failed to generate character reference image for ${char.name}: Provider returned no URL.`,
     );
 
-  // Persist provider URL → stable storage
-  const refImageUrl = await persistProviderImage(
-    rawUrl,
-    `projects/${char.projectId}/characters/${char.id}.jpg`,
-  ).catch(async (persistErr) => {
-    logger.warn(
-      { characterId, err: String(persistErr) },
-      "[assets] persistProviderImage failed — saving raw URL instead",
-    );
-    return rawUrl;
+  // Download once, use for both local persistence and Volcengine asset ingestion
+  const imgBuf = await fetchAsBuffer(rawUrl);
+  const refImageUrl = await persistAsset({
+    key: `projects/${char.projectId}/characters/${char.id}.jpg`,
+    data: imgBuf,
+    contentType: "image/jpeg",
   });
 
   await db.character.update({ where: { id: characterId }, data: { refImageUrl } });
 
+  // Upload buffer to Volcengine Asset Library via Base64 Data URI,
+  // bypassing the need for Volcengine to download from a URL.
   try {
-    // Try persisted (local) URL first; if Volcengine can't access it, fall back to raw provider URL
-    await triggerAssetIngestion({
-      projectId: char.projectId,
-      id: char.id,
-      name: char.name,
-      url: refImageUrl,
-    });
-  } catch (ingestErr: unknown) {
-    const ingestMsg = ingestErr instanceof Error ? ingestErr.message : String(ingestErr);
-    const isDownloadError = ingestMsg.includes("download") || ingestMsg.includes("timeout") || ingestMsg.includes("connect");
-    if (isDownloadError && rawUrl) {
-      logger.warn(
-        { characterId, characterName: char.name, projectId: char.projectId, err: ingestMsg },
-        "[assets] Volcengine ingestion failed with persisted URL — retrying with raw provider URL",
-      );
-      try {
-        await triggerAssetIngestion({
-          projectId: char.projectId,
-          id: char.id,
-          name: char.name,
-          url: rawUrl,
-        });
-        return refImageUrl;
-      } catch (fallbackErr) {
-        logger.error(
-          { characterId, err: String(fallbackErr) },
-          "[assets] Volcengine ingestion also failed with raw URL",
-        );
-      }
-    } else {
-      logger.warn(
-        { characterId, characterName: char.name, projectId: char.projectId, err: ingestMsg },
-        "[assets] Volcengine CreateAsset failed — ref image URL is saved; retry audit later or check Volcengine status",
-      );
+    const project = await db.project.findUniqueOrThrow({ where: { id: char.projectId } });
+    let groupId = project.volcengineAssetGroupId;
+    if (!groupId) {
+      const group = await createAssetGroup(`${project.title}_assets`);
+      groupId = group.Id;
+      await db.project.update({ where: { id: char.projectId }, data: { volcengineAssetGroupId: groupId } });
     }
+    const assetId = await ingestImageFromBuffer({
+      groupId: groupId!,
+      buffer: imgBuf,
+      name: char.name,
+    });
+    await db.character.update({
+      where: { id: characterId },
+      data: { volcengineAssetId: assetId, volcengineStatus: "Processing" },
+    });
+    await queues.asset.add(`poll-${characterId}`, {
+      assetId,
+      projectId: char.projectId,
+      characterId,
+    }, { delay: 5000 });
+    logger.info({ characterId, assetId }, "[assets] Volcengine asset created via buffer upload");
+  } catch (ingestErr: unknown) {
+    logger.warn(
+      { characterId, characterName: char.name, err: String(ingestErr) },
+      "[assets] Volcengine buffer ingestion failed — ref image is saved locally; will retry later",
+    );
   }
 
   return refImageUrl;

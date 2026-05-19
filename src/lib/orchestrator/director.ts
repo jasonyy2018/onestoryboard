@@ -477,10 +477,11 @@ export async function runParseAndStoryboard(projectId: string) {
       const propTasks = scenes.flatMap(
         (s: { props: { refImageUrl: string | null; id: string }[] }) => s.props.filter((p: { refImageUrl: string | null }) => !p.refImageUrl),
       );
-      for (const prop of propTasks) {
-        generatePropReference(prop.id, imageModel).catch((err: any) =>
-          logger.warn({ propId: prop.id, err }, "[director] prop ref failed"),
-        );
+      if (propTasks.length > 0) {
+        await runPool(propTasks, imageConc, async (prop: { id: string }) => {
+          try { await generatePropReference(prop.id, imageModel); }
+          catch (err) { logger.error({ propId: prop.id, err }, "[director] prop asset failed"); }
+        });
       }
     }
 

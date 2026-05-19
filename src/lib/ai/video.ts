@@ -10,6 +10,8 @@ export interface VideoGenInput {
   generateAudio?: boolean;
   cameraMove?: string;
   locale?: string;
+  seed?: number;
+  firstFrameUrl?: string;
 }
 
 export interface VideoGenResult {
@@ -17,6 +19,7 @@ export interface VideoGenResult {
   cost: number;
   model: string;
   taskId?: string;
+  lastFrameUrl?: string;
 }
 
 export type VideoModelKey = "seedance-2.0-fast";
@@ -49,14 +52,19 @@ async function createSeedanceTask(input: VideoGenInput): Promise<VideoGenResult>
     content.push({ type: "image_url", image_url: { url: `asset://${assetId}` }, role: "reference_image" });
   }
 
-  const body = {
+  const body: Record<string, unknown> = {
     model: MODEL_ID,
     content,
     generate_audio: input.generateAudio ?? true,
     ratio: input.ratio ?? "9:16",
     duration,
     watermark: false,
+    return_last_frame: true,
   };
+
+  if (input.seed !== undefined) {
+    body.seed = input.seed;
+  }
 
   const res = await fetch(
     "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
@@ -88,7 +96,7 @@ async function createSeedanceTask(input: VideoGenInput): Promise<VideoGenResult>
   };
 }
 
-export async function pollSeedanceTask(taskId: string): Promise<{ url: string; status: string }> {
+export async function pollSeedanceTask(taskId: string): Promise<{ url: string; status: string; lastFrameUrl?: string }> {
   const apiKey = env.VOLCENGINE_ARK_API_KEY;
   if (!apiKey) throw new Error("VOLCENGINE_ARK_API_KEY is not configured");
 
@@ -101,7 +109,7 @@ export async function pollSeedanceTask(taskId: string): Promise<{ url: string; s
 
   const data = (await res.json()) as {
     status?: string;
-    content?: { video_url?: string } | Array<{ type: string; video_url?: { url: string } }>;
+    content?: { video_url?: string; last_frame_url?: string } | Array<{ type: string; video_url?: { url: string }; image_url?: { url: string } }>;
     error?: { code: string; message: string };
   };
 
@@ -109,17 +117,19 @@ export async function pollSeedanceTask(taskId: string): Promise<{ url: string; s
 
   const status = data.status ?? "pending";
   let url = "";
+  let lastFrameUrl: string | undefined;
+
   if (status === "succeeded" && data.content) {
     if (Array.isArray(data.content)) {
-      // 旧格式：数组
       url = data.content.find((c) => c.type === "video_url")?.video_url?.url ?? "";
+      lastFrameUrl = data.content.find((c) => c.type === "image_url")?.image_url?.url;
     } else {
-      // 新格式：对象 { video_url: "https://..." }
       url = (data.content as { video_url?: string }).video_url ?? "";
+      lastFrameUrl = (data.content as { last_frame_url?: string }).last_frame_url;
     }
   }
 
-  return { url, status };
+  return { url, status, lastFrameUrl };
 }
 
 export async function generateVideo(input: VideoGenInput): Promise<VideoGenResult> {
@@ -130,7 +140,6 @@ export async function generateVideo(input: VideoGenInput): Promise<VideoGenResul
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // asset not found 或 人脸审核拦截 → 去掉参考图降级重试一次
     const isRefImageError =
       msg.includes("is not found") ||
       msg.includes("InputImageSensitiveContentDetected") ||
@@ -142,7 +151,7 @@ export async function generateVideo(input: VideoGenInput): Promise<VideoGenResul
     if (isRefImageError && (input.volcengineAssetIds?.length || input.refImageUrls?.length)) {
       console.warn("[video] reference image error, retrying without reference images:", msg.slice(0, 120));
       return withRetry(
-        () => createSeedanceTask({ ...input, volcengineAssetIds: [], refImageUrls: [] }),
+        () => createSeedanceTask({ ...input, volcengineAssetIds: [], refImageUrls: [], firstFrameUrl: undefined }),
         { context: "video:seedance-2.0-fast:no-ref", retries: 2, minTimeout: 3000 },
       );
     }

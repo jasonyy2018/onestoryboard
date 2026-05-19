@@ -15,7 +15,7 @@ const NORMALIZE_SYSTEM_EN = `You are a professional short drama (短剧) script 
 - Each scene is an independent visual picture
 - sceneId format: E{episode}S{two-digit} (e.g., E1S01)
 - duration: 15 seconds per scene
-- sceneType: MUST use exact Chinese enum values: "剧情" (drama), "动作" (action), "对话" (dialogue), "过渡" (transition), "空镜" (establishing)
+- sceneType: MUST use exact English enum values: "DRAMA", "ACTION", "DIALOGUE", "TRANSITION", "ESTABLISHING"
 - segmentBreak: true only for major scene transitions (time/location/mood change)
 - Characters in scene: reference characters by @NAME
 - description: vivid visual description in narrative style (not keyword lists)
@@ -28,7 +28,7 @@ CRITICAL: Return ONLY valid JSON. Output MUST be a JSON object with "episode" (n
       "sceneId": "E1S01",
       "description": "...",
       "duration": 15,
-      "sceneType": "对话",
+      "sceneType": "DIALOGUE",
       "segmentBreak": false,
       "charactersInScene": ["@Zhang San"]
     }

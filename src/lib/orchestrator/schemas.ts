@@ -60,7 +60,7 @@ export const NormalizedSceneSchema = z.object({
   sceneId: z.string(),
   description: z.string(),
   duration: z.number(),
-  sceneType: z.enum(["剧情", "动作", "对话", "过渡", "空镜"]),
+  sceneType: z.enum(["剧情", "动作", "对话", "过渡", "空镜", "DRAMA", "ACTION", "DIALOGUE", "TRANSITION", "ESTABLISHING"]),
   segmentBreak: z.boolean(),
   charactersInScene: z.array(z.string()),
 });

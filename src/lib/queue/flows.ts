@@ -104,18 +104,37 @@ export async function fanoutAssetsAndCompose(projectId: string) {
     "[fanoutAssetsAndCompose] cleared stale jobs, building flow",
   );
 
-  const shotChildren = shots.map((shot) => ({
-    name: `shot-${shot.id}`,
-    queueName: QUEUE_NAMES.shot,
-    data: { shotId: shot.id, projectId },
-    opts: {
-      jobId: `shot-${shot.id}`,
-      attempts: 3,
-      backoff: { type: "exponential", delay: 2000 },
-    },
-  }));
+  // Build sequential chains per scene for frame continuity, parallel across scenes for speed.
+  // compose → scene1-shot1 → scene1-shot2 → scene1-shot3
+  //         → scene2-shot1 → scene2-shot2
+  // Each chain ensures shot N+1 can read shot N's lastFrameUrl from the DB.
+  const sceneGroups = new Map<string, typeof shots>();
+  for (const shot of shots) {
+    const key = `${shot.scene.episodeNumber}-${shot.scene.order}`;
+    if (!sceneGroups.has(key)) sceneGroups.set(key, []);
+    sceneGroups.get(key)!.push(shot);
+  }
 
-  const children: any[] = [...shotChildren];
+  const children: any[] = [];
+  for (const [, sceneShots] of sceneGroups) {
+    // Build reversed chain: deepest child (last shot) → ... → first shot
+    let chain: any[] | undefined;
+    for (let i = sceneShots.length - 1; i >= 0; i--) {
+      const shot = sceneShots[i]!;
+      chain = [{
+        name: `shot-${shot.id}`,
+        queueName: QUEUE_NAMES.shot,
+        data: { shotId: shot.id, projectId },
+        opts: {
+          jobId: `shot-${shot.id}`,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 2000 },
+        },
+        children: chain,
+      }];
+    }
+    if (chain) children.push(chain[0]);
+  }
 
   await flowProducer.add({
     name: `compose-${projectId}`,

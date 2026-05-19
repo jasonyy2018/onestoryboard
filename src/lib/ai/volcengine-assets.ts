@@ -199,3 +199,37 @@ export async function ingestImageAndWait(args: {
 
   throw new Error(`Asset ${assetId} ingestion timed out after ${maxAttempts} attempts`);
 }
+
+/**
+ * Upload an image **buffer** to Volcengine Asset Library as Base64 Data URI,
+ * bypassing the need for a publicly accessible download URL.
+ *
+ * This is the preferred path for character reference images — the file data
+ * is sent inline so Volcengine never needs to call back to our server.
+ *
+ * Returns the assetId (pass as `asset://<id>` to Seedance).
+ */
+export async function ingestImageFromBuffer(args: {
+  groupId: string;
+  buffer: Buffer;
+  name: string;
+  mimeType?: string;
+  maxAttempts?: number;
+  intervalMs?: number;
+}): Promise<string> {
+  const { groupId, buffer, name, mimeType = "image/jpeg", maxAttempts = 40, intervalMs = 3000 } = args;
+  const base64 = buffer.toString("base64");
+  const dataUri = `data:${mimeType};base64,${base64}`;
+
+  const asset = await createAsset({ groupId, url: dataUri, assetType: "Image", name });
+  const assetId: string = asset.Id;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const status = await pollAssetStatus(assetId);
+    if (status === "Active") return assetId;
+    if (status === "Failed") throw new Error(`Asset ${assetId} ingestion failed`);
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error(`Asset ${assetId} ingestion timed out after ${maxAttempts} attempts`);
+}

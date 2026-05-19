@@ -29,13 +29,13 @@ Execute them in strict order; Speed Ramp transitions must be smooth and beat-syn
 
 `generate_audio: true`. **Keep only**: sync dialogue, on-set ambience (wind/rain/crowd/room tone), and diegetic SFX (footsteps/impacts/object sounds). **Strictly forbid**: background music (BGM), cinematic score, stock music beds. Audio must be in sync with picture; do not produce silent footage unless the script explicitly demands silence.
 
-## Subtitle ban (absolute)
+## Subtitle ban — ABSOLUTE, do not override
 
-The final video **must never contain any text** — including but not limited to: dialogue subtitles, title cards, scene headers, character name labels, timestamps, watermarks, or any written on-screen text. All information must be conveyed exclusively through audio (dialogue, ambience) and visual action. Text exists only in the storyboard reference image, never in the final video output.
+**CRITICAL**: This video must be a pure visual medium with zero on-screen text. No subtitles, no captions, no title cards, no burned-in dialogue, no scene labels, no character names, no timestamps, no watermarks, no text overlays of any kind in any language (English, Chinese, or otherwise). All narrative and dialogue must be conveyed exclusively through the synchronized native audio track. If this rule is violated, the entire generation fails.
 
 ## Negative prompts (strictly excluded)
 
-cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, clean clothes, deformed hands, extra fingers, grid lines, nine-box overlay, board watermarks, reference UI, picture-in-picture artifacts, **subtitles**, **on-screen text**, **dialogue captions**, **title text**, **burned-in text**.
+cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, clean clothes, deformed hands, extra fingers, grid lines, nine-box overlay, board watermarks, reference UI, picture-in-picture artifacts, **subtitles**, **on-screen text**, **dialogue captions**, **title text**, **burned-in text**, **caption text**, **text overlay**, **hud text**, **chapter title**, **episode title card**, **opening credits**, **ending credits**, **timecode**, **subtitle track**, **text bubble**, **speech bubble**, **label**, **caption**, **watermark text**, **logo text**.
 
 ## Character appearance lock (strict)
 

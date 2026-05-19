@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { generateVideo, pollSeedanceTask } from "@/lib/ai/video";
-import { createAssetGroup, ingestImageAndWait, pollAssetStatus } from "@/lib/ai/volcengine-assets";
+import { createAssetGroup, ingestImageFromBuffer, pollAssetStatus } from "@/lib/ai/volcengine-assets";
 import { generateImage, type ImageModelKey } from "@/lib/ai/image";
 import { fetchAsBuffer, persistAsset } from "@/lib/ai/storage";
 import { wrapCinematicPrompt, filterSensitiveWords } from "@/lib/orchestrator/safety";
@@ -23,6 +23,16 @@ import { wrapSeedancePart2Template } from "@/lib/prompts/seedance-row-prompt";
 const SEEDANCE_MAX_REFERENCE_IMAGES = 9;
 
 const PayloadSchema = z.object({ shotId: z.string(), projectId: z.string() });
+
+/** Simple string hash for stable seed (FNV-1a 32-bit). */
+function crc32(str: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
 
 function dedupeUrls(urls: string[]): string[] {
   const out: string[] = [];
@@ -263,62 +273,67 @@ export const shotWorker = new Worker(
     // 自动检测 asset 是否在当前 project（VOLCENGINE_PROJECT_NAME）有效：
     //   - 有效（Active）→ 直接使用
     //   - 不存在（旧 default project 的 ID）→ 用 refImageUrl 重新入库到正确 project，更新 DB
-    const refImageUrls: string[] = [];
     const volcengineAssetIds: string[] = [];
+    const directCharUrls: string[] = [];
 
     for (const sc of shot.characters) {
       const c = sc.character;
-      if (volcengineAssetIds.length >= 2) break;
-      if (!c.volcengineAssetId || !c.refImageUrl) continue;
+      if (!c.refImageUrl) continue;
+      if (volcengineAssetIds.length + directCharUrls.length >= 2) break;
 
-      try {
-        // 先验证 asset 在当前 project 是否可用
-        const assetInfo = await pollAssetStatus(c.volcengineAssetId);
-        if (assetInfo === "Active") {
-          volcengineAssetIds.push(c.volcengineAssetId);
-          log.info({ assetId: c.volcengineAssetId, char: c.name }, "[shot-worker] ✓ asset valid in current project");
-        } else {
-          log.warn({ assetId: c.volcengineAssetId, status: assetInfo, char: c.name }, "[shot-worker] asset not Active, skipping");
-        }
-      } catch (err) {
-        // asset 在当前 project 找不到 → 用 refImageUrl 重新入库
-        const errMsg = err instanceof Error ? err.message : String(err);
-        if (errMsg.includes("not found") || errMsg.includes("NotFound")) {
-          log.info({ char: c.name, refImageUrl: c.refImageUrl }, "[shot-worker] asset not in current project, re-ingesting...");
-          try {
-            // 获取项目的 assetGroupId（如果没有就创建一个）
-            const proj = await db.project.findUniqueOrThrow({ where: { id: projectId } });
-            let groupId = proj.volcengineAssetGroupId;
-            if (!groupId) {
-              const group = await createAssetGroup(`${proj.title}_assets`);
-              groupId = group.Id;
-              await db.project.update({ where: { id: projectId }, data: { volcengineAssetGroupId: groupId } });
-            }
-            const newAssetId = await ingestImageAndWait({
-              groupId: groupId!,
-              url: c.refImageUrl,
-              name: c.name,
-            });
-            // 更新数据库
-            await db.character.update({
-              where: { id: c.id },
-              data: { volcengineAssetId: newAssetId, volcengineStatus: "Active" },
-            });
-            volcengineAssetIds.push(newAssetId);
-            log.info({ newAssetId, char: c.name }, "[shot-worker] ✓ asset re-ingested into correct project");
-          } catch (reIngestErr) {
-            log.warn({ err: reIngestErr, char: c.name }, "[shot-worker] re-ingestion failed, skipping this character asset");
+      // ── 优先走 asset:// 通道（报白资产，免人脸审核） ──
+      if (c.volcengineAssetId) {
+        try {
+          const assetInfo = await pollAssetStatus(c.volcengineAssetId);
+          if (assetInfo === "Active") {
+            volcengineAssetIds.push(c.volcengineAssetId);
+            log.info({ assetId: c.volcengineAssetId, char: c.name }, "[shot-worker] ✓ asset valid");
+            continue;
           }
-        } else {
-          log.warn({ err: errMsg, char: c.name }, "[shot-worker] asset check failed, skipping");
+          log.warn({ assetId: c.volcengineAssetId, status: assetInfo, char: c.name }, "[shot-worker] asset not Active, will retry or fallback");
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          if (errMsg.includes("not found") || errMsg.includes("NotFound")) {
+            log.info({ char: c.name }, "[shot-worker] asset not in project, re-ingesting...");
+            try {
+              const proj = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+              let groupId = proj.volcengineAssetGroupId;
+              if (!groupId) {
+                const group = await createAssetGroup(`${proj.title}_assets`);
+                groupId = group.Id;
+                await db.project.update({ where: { id: projectId }, data: { volcengineAssetGroupId: groupId } });
+              }
+              const imgBuf = await fetchAsBuffer(c.refImageUrl);
+              const newAssetId = await ingestImageFromBuffer({ groupId: groupId!, buffer: imgBuf, name: c.name });
+              await db.character.update({
+                where: { id: c.id },
+                data: { volcengineAssetId: newAssetId, volcengineStatus: "Active" },
+              });
+              volcengineAssetIds.push(newAssetId);
+              log.info({ newAssetId, char: c.name }, "[shot-worker] ✓ re-ingested");
+              continue;
+            } catch (reErr) {
+              log.warn({ err: reErr, char: c.name }, "[shot-worker] re-ingestion failed");
+            }
+          } else {
+            log.warn({ err: errMsg, char: c.name }, "[shot-worker] asset check failed");
+          }
         }
       }
+
+      // ── Fallback: 用直接 URL 作为角色参考（可能触发人脸审核，但优于无参考） ──
+      directCharUrls.push(c.refImageUrl);
     }
 
-    if (volcengineAssetIds.length === 0) {
-      log.warn("[shot-worker] no valid character asset IDs — generating without reference image");
+    // 混合排序：asset:// 排前面（免审），URL fallback 排后面
+    const allCharRefs = [...volcengineAssetIds, ...directCharUrls];
+    if (allCharRefs.length === 0) {
+      log.warn("[shot-worker] no character reference images at all — generating without reference image");
     } else {
-      log.info({ assetIds: volcengineAssetIds }, "[shot-worker] Part2 reference assets ready");
+      log.info(
+        { assetIds: volcengineAssetIds.length, directUrls: directCharUrls.length },
+        "[shot-worker] character references ready",
+      );
     }
 
     const nConfig = (shot.scene.project.modelConfig as Record<string, unknown>) || {};
@@ -381,14 +396,35 @@ export const shotWorker = new Worker(
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);
 
-    // Part 2 参考图：故事板图（storyboardKeyUrl）作为视觉锚点传入 Seedance
-    // refImageUrls 保留兼容旧逻辑（目前为空），主要锚点通过 volcengineAssetIds + storyboardKeyUrl
+    // Part 2 参考图：故事板图 + 场景参考 + 道具参考 + 角色 URL fallback（作为直接 URL 传入）
+    // 角色优先走 asset:// 通道（国人脸免审），无 asset:// 时用 refImageUrl 直接 URL 降级
+    // 场景/道具不含人脸所以直接传 URL
+    const extraRefs: string[] = [];
+    if (shot.scene.refImageUrl) extraRefs.push(shot.scene.refImageUrl);
+    for (const p of shot.scene.props) {
+      if (p.refImageUrl && extraRefs.length < 3) extraRefs.push(p.refImageUrl);
+    }
     const refForVideo = dedupeUrls([
       ...(storyboardKeyUrl ? [storyboardKeyUrl] : []),
-      ...refImageUrls,
+      ...extraRefs,
+      ...directCharUrls,
     ]).slice(0, SEEDANCE_MAX_REFERENCE_IMAGES);
+
+    // ── Multi-shot continuity ──
+    // Fixed seed from project ID ensures reproducible outputs across shots.
+    const stableSeed = crc32(projectId);
+    // Attempt to chain from the previous shot's last frame (same scene, same episode).
+    let firstFrameUrl: string | undefined;
+    if (shot.order > 1) {
+      const prev = await db.shot.findFirst({
+        where: { sceneId: shot.sceneId, order: shot.order - 1, lastFrameUrl: { not: null } },
+        select: { lastFrameUrl: true },
+      });
+      if (prev?.lastFrameUrl) firstFrameUrl = prev.lastFrameUrl;
+    }
+
     log.info(
-      { model: "seedance-2.0-fast", refImages: refForVideo.length, assetIds: volcengineAssetIds.length, duration: shot.duration },
+      { model: "seedance-2.0-fast", refImages: refForVideo.length, assetIds: volcengineAssetIds.length, duration: shot.duration, seed: stableSeed, hasPrevFrame: !!firstFrameUrl },
       "[shot-worker] ⬜ Part2 video generating...",
     );
     const videoRes = await generateVideo(
@@ -401,6 +437,8 @@ export const shotWorker = new Worker(
         volcengineAssetIds: volcengineAssetIds.length > 0 ? volcengineAssetIds : undefined,
         locale: shot.scene.project.language,
         generateAudio: true,
+        seed: stableSeed,
+        firstFrameUrl,
       },
     );
 
@@ -416,6 +454,15 @@ export const shotWorker = new Worker(
       });
     }
 
+    // Extract last frame URL for shot continuity (query once more since task is done)
+    let lastFrameUrl: string | undefined;
+    if (videoRes.taskId) {
+      try {
+        const final = await pollSeedanceTask(videoRes.taskId);
+        lastFrameUrl = final.lastFrameUrl;
+      } catch { /* non-critical */ }
+    }
+
     log.info({ videoUrl }, "[shot-worker] ✓ Part2 video done, persisting...");
     const vidBuf = await fetchAsBuffer(videoUrl);
     const persistedVid = await persistAsset({
@@ -429,6 +476,7 @@ export const shotWorker = new Worker(
       data: {
         status: "READY",
         videoUrl: persistedVid,
+        lastFrameUrl,
         cost: { increment: videoRes.cost },
       },
     });

@@ -16,6 +16,8 @@ services:
       REDIS_URL: redis://redis:6379
       # worker 运行时读此变量生成本地资产的公网 URL，必须是外网可访问的域名
       NEXT_PUBLIC_APP_URL: https://test.togomol.com
+      # 关闭腾讯 OG 合规检查；English prompt 易被误杀
+      TENCENT_AIGC_RELAX_COMPLIANCE: "1"
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }

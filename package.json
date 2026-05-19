@@ -73,6 +73,9 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/engines", "prisma"]
+  },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"

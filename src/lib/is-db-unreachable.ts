@@ -1,4 +1,4 @@
-import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
+import { PrismaClientInitializationError } from "@prisma/client/runtime/client";
 
 /** True when Prisma cannot open a TCP connection to Postgres (dev: DB / Docker not running). */
 export function isPrismaDbUnreachable(err: unknown): boolean {

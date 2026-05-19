@@ -10,9 +10,13 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import crypto from "crypto";
 
-const db = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
 
 const SERVICE = "ark";
 const REGION = "cn-beijing";

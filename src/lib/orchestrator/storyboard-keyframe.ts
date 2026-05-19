@@ -24,7 +24,7 @@ export function storyboardKeyframeNegative(lang: string, imagePrompt?: string): 
   }
   return lang === "zh"
     ? "动漫化角色，Q版人物，三渲二卡通，游戏引擎渲染，条漫对话框，潮流插画-only人物，低画质，畸形，无关物体，现代物体，软件截图，NLE时间线，界面UI，多余手指，畸形手部"
-    : "anime or chibi characters, 3d cartoon render, game engine toon, webcomic speech bubbles, illustration-only cast, low quality, deformed, unrelated objects, modern objects, software screenshot, NLE timeline, UI overlay, extra fingers, deformed hands";
+    : "anime or chibi characters, 3d cartoon render, game engine toon, webcomic speech bubbles, illustration-only cast, low quality, deformed, unrelated objects, modern objects, software screenshot, NLE timeline, UI overlay, extra fingers, deformed hands, East Asian facial features, Asian monolid eyes, Asian appearance";
 }
 
 export function storyboardKeyframeUserPrompt(imagePrompt: string, lang: string): string {

@@ -35,11 +35,15 @@ Execute them in strict order; Speed Ramp transitions must be smooth and beat-syn
 
 ## Negative prompts (strictly excluded)
 
-cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, clean clothes, deformed hands, extra fingers, grid lines, nine-box overlay, board watermarks, reference UI, picture-in-picture artifacts, **subtitles**, **on-screen text**, **dialogue captions**, **title text**, **burned-in text**, **caption text**, **text overlay**, **hud text**, **chapter title**, **episode title card**, **opening credits**, **ending credits**, **timecode**, **subtitle track**, **text bubble**, **speech bubble**, **label**, **caption**, **watermark text**, **logo text**.
+cartoon, anime, 3D render, CGI, painting, blurry, low quality, modern objects, clean clothes, deformed hands, extra fingers, grid lines, nine-box overlay, board watermarks, reference UI, picture-in-picture artifacts, **subtitles**, **on-screen text**, **dialogue captions**, **title text**, **burned-in text**, **caption text**, **text overlay**, **hud text**, **chapter title**, **episode title card**, **opening credits**, **ending credits**, **timecode**, **subtitle track**, **text bubble**, **speech bubble**, **label**, **caption**, **watermark text**, **logo text**, **East Asian facial features**, **Asian monolid eyes**, **Asian appearance**, **Asian facial structure** (only for English/Western projects — these negative terms are invalid for Chinese projects).
 
 ## Character appearance lock (strict)
 
 All on-screen characters must match their appearance description exactly — maintain consistent ethnicity, skin tone, facial features, hair color/style, body type, and costume. Do not alter or substitute character looks between shots or within a shot. Extras must blend with the lead characters' world without introducing conflicting ethnicities or period-anachronistic features.
+
+**English/Western projects**: ALL characters (protagonist, supporting, extras, background bystanders) MUST be Western/Caucasian — angular jaw, defined cheekbones, deep-set eyes, straight/narrow nose, thinner lips, pronounced brow ridge. No East Asian or Asian features unless the script explicitly specifies an Asian character.
+
+**Chinese projects**: ALL characters must be East Asian Chinese — no Western/Caucasian faces allowed.
 
 ## Deliverable lock
 

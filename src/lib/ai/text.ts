@@ -117,14 +117,30 @@ export async function generateStructured<S extends ZodTypeAny>(args: {
       const parsed = JSON.parse(repaired);
 
       if (Array.isArray(parsed)) {
-        // Zod v4 safeParse can throw; use try-catch.
+        // Some models return a bare array instead of the wrapper object.
         try {
           return args.schema.parse(parsed) as z.infer<S>;
         } catch {}
+        // Try wrapping with a single key + episode.
         for (const key of ["scenes", "data", "items", "characters", "shots", "steps"]) {
           try {
             return args.schema.parse({ episode: 1, [key]: parsed }) as z.infer<S>;
           } catch {}
+        }
+        // Inspect first element to guess whether it's a scenes[] or characters[] array.
+        const first = parsed[0];
+        if (first && typeof first === "object" && !Array.isArray(first)) {
+          if ("order" in first && "location" in first) {
+            // Looks like a scenes array → provide empty characters
+            try { return args.schema.parse({ episode: 1, scenes: parsed, characters: [] }) as z.infer<S>; } catch {}
+          }
+          if ("name" in first && "description" in first) {
+            // Looks like a characters array → provide empty scenes
+            try { return args.schema.parse({ episode: 1, scenes: [], characters: parsed }) as z.infer<S>; } catch {}
+          }
+          // Generic fallback: wrap as { data: parsed }
+          try { return args.schema.parse({ data: parsed }) as z.infer<S>; } catch {}
+          try { return args.schema.parse({ items: parsed }) as z.infer<S>; } catch {}
         }
         throw new Error("LLM returned array; schema expects object — none of the fallback keys matched");
       }

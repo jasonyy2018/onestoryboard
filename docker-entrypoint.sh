@@ -6,7 +6,7 @@ echo "[entrypoint] Applying database schema..."
 # --skip-generate: 镜像里已预先生成 client，无需重复
 RETRIES=12
 COUNT=0
-until node_modules/.bin/prisma db push --skip-generate; do
+until node_modules/.bin/prisma db push; do
   COUNT=$((COUNT + 1))
   if [ $COUNT -ge $RETRIES ]; then
     echo "[entrypoint] Schema push failed after $RETRIES attempts, aborting."

@@ -90,8 +90,19 @@ export async function persistAsset(args: {
 }
 
 /** Download remote asset as buffer (for FFmpeg / re-upload). */
-export async function fetchAsBuffer(url: string): Promise<Buffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed: ${url} → ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+export async function fetchAsBuffer(url: string, timeoutMs = 5 * 60 * 1000): Promise<Buffer> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Fetch failed: ${url} → ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`fetchAsBuffer timed out after ${timeoutMs}ms: ${url}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }

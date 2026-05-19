@@ -75,7 +75,10 @@ function keyframeRefUrls(shot: {
 
 /**
  * Helper: Poll a task until it succeeds or fails.
+ * Extends the BullMQ job lock every EXTEND_LOCK_EVERY_MS to prevent stalling.
  */
+const EXTEND_LOCK_EVERY_MS = 4 * 60 * 1000; // extend lock every 4 min
+
 async function pollTask<T>(args: {
   taskId: string;
   pollFn: (id: string) => Promise<{ url?: string; urls?: string[]; status: string }>;
@@ -84,9 +87,20 @@ async function pollTask<T>(args: {
   maxRetries?: number;
   intervalMs?: number;
 }): Promise<string> {
-  const { taskId, pollFn, job, stage, maxRetries = 180, intervalMs = 5000 } = args;
+  const { taskId, pollFn, job, stage, maxRetries = 240, intervalMs = 5000 } = args;
+  let lastExtend = Date.now();
 
   for (let i = 0; i < maxRetries; i++) {
+    // Extend lock before it expires (lockDuration is 45 min, extend every 4 min)
+    if (Date.now() - lastExtend >= EXTEND_LOCK_EVERY_MS) {
+      try {
+        await job.extendLock(job.token ?? "", 45 * 60 * 1000);
+        lastExtend = Date.now();
+      } catch (extErr) {
+        logger.warn({ stage, taskId, extErr }, "[pollTask] extendLock failed (continuing)");
+      }
+    }
+
     await job.log(`Polling ${stage} task ${taskId} (attempt ${i + 1})...`);
 
     const res = await pollFn(taskId);
@@ -344,9 +358,14 @@ export const shotWorker = new Worker(
     const templated = wrapSeedancePart2Template(rowScriptCore, lang);
     const richPrompt = wrapCinematicPrompt(templated, lang);
 
-    const refForVideo = dedupeUrls(refImageUrls).slice(0, SEEDANCE_MAX_REFERENCE_IMAGES);
+    // Part 2 参考图：故事板图（storyboardKeyUrl）作为视觉锚点传入 Seedance
+    // refImageUrls 保留兼容旧逻辑（目前为空），主要锚点通过 volcengineAssetIds + storyboardKeyUrl
+    const refForVideo = dedupeUrls([
+      ...(storyboardKeyUrl ? [storyboardKeyUrl] : []),
+      ...refImageUrls,
+    ]).slice(0, SEEDANCE_MAX_REFERENCE_IMAGES);
     log.info(
-      { model: "seedance-2.0-fast", refImages: refForVideo.length, duration: shot.duration },
+      { model: "seedance-2.0-fast", refImages: refForVideo.length, assetIds: volcengineAssetIds.length, duration: shot.duration },
       "[shot-worker] ⬜ Part2 video generating...",
     );
     const videoRes = await generateVideo(
@@ -403,9 +422,10 @@ export const shotWorker = new Worker(
     connection: createBullConnection(),
     concurrency: env.WORKER_SHOT_CONCURRENCY,
     // OG 生图 + Seedance 视频各需要几分钟，必须延长持锁时间
-    lockDuration: 20 * 60 * 1000,  // 20 分钟
+    // pollTask 内部每 4 分钟调用 extendLock，初始锁需覆盖第一次 extend 前的时间
+    lockDuration: 45 * 60 * 1000,  // 45 分钟初始锁
     stalledInterval: 60 * 1000,
-    maxStalledCount: 1,
+    maxStalledCount: 3,
   },
 );
 

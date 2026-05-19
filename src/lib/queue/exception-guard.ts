@@ -30,7 +30,7 @@ process.on("uncaughtException", (err) => {
   // BullMQ × Node.js 22 竞态噪声：已由 AbortController 补丁处理，
   // 但仍可能通过微任务/异步路径逃逸。直接静默，不在控制台输出。
   if (isBullMqAbortNoise(err)) {
-    process.exitCode = 1;
+    // harmless BullMQ × Node 22 race — no action needed
     return;
   }
   logger.error({ err }, "[exception-guard] uncaughtException");

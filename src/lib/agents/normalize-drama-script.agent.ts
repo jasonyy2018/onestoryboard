@@ -18,7 +18,7 @@ const NORMALIZE_SYSTEM_EN = `You are a professional short drama (短剧) script 
 - sceneType: one of 剧情(drama), 动作(action), 对话(dialogue), 过渡(transition), 空镜(establishing)
 - segmentBreak: true only for major scene transitions (time/location/mood change)
 - Characters in scene: reference characters by @NAME
-- description: vivid visual description in Chinese narrative style (not keyword lists)
+- description: vivid visual description in narrative style (not keyword lists)
 
 CRITICAL: Return ONLY valid JSON. Output MUST be a JSON object with a "scenes" array, like:
 {
@@ -27,9 +27,9 @@ CRITICAL: Return ONLY valid JSON. Output MUST be a JSON object with a "scenes" a
       "sceneId": "E1S01",
       "description": "...",
       "duration": 15,
-      "sceneType": "剧情",
+      "sceneType": "dialogue",
       "segmentBreak": false,
-      "charactersInScene": ["@张三"]
+      "charactersInScene": ["@Zhang San"]
     }
   ]
 }`;

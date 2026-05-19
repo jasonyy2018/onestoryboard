@@ -13,7 +13,7 @@ const EPISODE_SCRIPT_SYSTEM_EN = `You are a short drama (短剧) script generato
 ## Output Rules
 Each scene must have:
 - sceneId: Unique identifier string (e.g., "E1S01", "E1S02", etc.)
-- visual.description: Vivid narrative description of what the camera sees (Chinese narrative style, not keyword list)
+- visual.description: Vivid narrative description of what the camera sees (narrative style, not keyword list)
 - visual.shotType: Cinematic shot type (WIDE/MEDIUM/CLOSE_UP/ESTABLISHING/POV/OTS)
 - visual.cameraMovement: Camera motion (push-in, pull-out, tracking, crane, handheld, steadicam, pan, tilt, or null)
 - visual.lighting: Lighting condition (natural morning light, warm tungsten, cold fluorescent, dramatic chiaroscuro, golden hour, etc.)

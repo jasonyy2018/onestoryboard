@@ -101,10 +101,24 @@ export function scrubForExternalImageApi(text: string, lang: "zh" | "en"): strin
       .replace(/创口|尸斑|腐烂/g, "妆效层次");
   }
   return base
+    // violence
     .replace(/\bzombies?\b/gi, "infected-type sfx-makeup character")
     .replace(/\bwalking dead\b/gi, "infected sfx-makeup character")
+    .replace(/\b(gore|gory|dismember|entrails)\b/gi, "stylized action")
+    .replace(/\b(blood(?:y|shed|bath|thirsty)?|massacre|carnage)\b/gi, "conflict scene")
+    .replace(/\bkill(?:ing|er)?s?\b/gi, "conflict action")
+    .replace(/\b(wound(?:s|ed)?|corpse(?:s)?|rott(?:en|ing)|decay(?:ing)?)\b/gi, "sfx makeup layer")
+    // weapons
+    .replace(/\b(weapon(?:s)?|gun(?:s)?|bomb(?:s)?|ammunition)\b/gi, "equipment")
+    // sexual / body
+    .replace(/\b(nudity|naked|porn(?:ographic)?|obscene|intercourse|sexually?\s+explicit)\b/gi, "non-explicit description")
+    .replace(/\b(breasts?|buttocks?|genitals?|genitalia)\b/gi, "body silhouette")
+    // clothing
     .replace(/\bOL\b/g, "business-casual wardrobe")
-    .replace(/\b(gore|gory|dismember|entrails)\b/gi, "stylized action");
+    // political
+    .replace(/\b(government|president)\b/gi, "authority")
+    // crime / drugs
+    .replace(/\b(gambling|drugs?|crime|criminal)\b/gi, "illegal activity");
 }
 
 /**
@@ -119,9 +133,11 @@ export function scrubNegativeForExternalImageApi(text: string, lang: "zh" | "en"
       .replace(/过激画面特写|不当低俗质感|写实冲突纪实风格/g, "非档案级质感");
   }
   return base
-    .replace(/\bnudity\b/gi, "non-broadcast framing")
-    .replace(/\bsexual content\b/gi, "non-broadcast tone")
-    .replace(/\bgore\b/gi, "non-broadcast shock");
+    .replace(/\b(nudity|naked|porn(?:ographic)?|obscene|intercourse)\b/gi, "non-broadcast framing")
+    .replace(/\bsexual(?:ly)?\s+content\b/gi, "non-broadcast tone")
+    .replace(/\b(gore|gory|dismember(?:ment)?|entrails?)\b/gi, "non-broadcast shock")
+    .replace(/\b(kill(?:ing|er)?s?|massacre|carnage|blood(?:y|shed|bath)?|wound(?:s|ed)?)\b/gi, "non-broadcast violence")
+    .replace(/\bexplicit\b/gi, "non-broadcast framing");
 }
 
 /**

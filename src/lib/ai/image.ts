@@ -80,8 +80,16 @@ async function generateWithWanxiang(
   );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`DashScope API error ${res.status}: ${err}`);
+    const errBody = await res.text();
+    // If DashScope can't download ref images, retry without them
+    if (
+      input.refImageUrls?.length &&
+      errBody.includes("Failed to download image")
+    ) {
+      logger.warn({ refCount: input.refImageUrls.length }, "[wanxiang] ref image download failed, retrying without ref images");
+      return generateWithWanxiang({ ...input, refImageUrls: undefined }, model);
+    }
+    throw new Error(`DashScope API error ${res.status}: ${errBody}`);
   }
 
   const data = (await res.json()) as {
@@ -314,9 +322,10 @@ export async function generateImage(
       }
       if (status === "failed") {
         // Fallback to wan2.7-image-pro if OG fails
+        // Strip refImageUrls — DashScope cannot download persisted local URLs.
         if (key.startsWith("tencent-og") && env.ALIBABA_DASHSCOPE_API_KEY) {
-          logger.warn({ taskId: result.taskId, failDetail }, "[image] OG failed, falling back to wan2.7-image-pro");
-          return generateWithWanxiang(input, "wan2.7-image-pro");
+          logger.warn({ taskId: result.taskId, failDetail }, "[image] OG failed, falling back to wan2.7-image-pro (no ref images)");
+          return generateWithWanxiang({ ...input, refImageUrls: undefined }, "wan2.7-image-pro");
         }
         throw new Error(failDetail ? `Tencent image generation failed: ${failDetail}` : "Tencent image generation failed");
       }
@@ -324,8 +333,8 @@ export async function generateImage(
     if (!result.url) {
       // Timeout fallback to wan
       if (key.startsWith("tencent-og") && env.ALIBABA_DASHSCOPE_API_KEY) {
-        logger.warn({ taskId: result.taskId, attempts: maxAttempts }, "[image] OG timed out, falling back to wan2.7-image-pro");
-        return generateWithWanxiang(input, "wan2.7-image-pro");
+        logger.warn({ taskId: result.taskId, attempts: maxAttempts }, "[image] OG timed out, falling back to wan2.7-image-pro (no ref images)");
+        return generateWithWanxiang({ ...input, refImageUrls: undefined }, "wan2.7-image-pro");
       }
       throw new Error(`Tencent image generation timed out after ${maxAttempts} polls. Task: ${result.taskId}`);
     }

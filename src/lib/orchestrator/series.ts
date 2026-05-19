@@ -63,7 +63,7 @@ export async function createSeriesWithFirstEpisode(args: {
 
   const project = await db.project.create({
     data: {
-      title: `${args.title} 第1集`,
+      title: args.language === "en" ? `${args.title} Episode 1` : `${args.title} 第1集`,
       episodeCount: 1,
       language: args.language,
       userId: user.id,
@@ -124,7 +124,7 @@ export async function createSeriesFromFullScript(args: {
     const epNum = i + 1;
     const project = await db.project.create({
       data: {
-        title: `${args.title} 第${epNum}集`,
+        title: args.language === "en" ? `${args.title} Episode ${epNum}` : `${args.title} 第${epNum}集`,
         episodeCount: 1,
         language: args.language,
         userId: user.id,
@@ -166,7 +166,7 @@ export async function appendEpisodeToSeries(args: {
 
   const project = await db.project.create({
     data: {
-      title: `${series.title} 第${nextEpNum}集`,
+      title: series.language === "en" ? `${series.title} Episode ${nextEpNum}` : `${series.title} 第${nextEpNum}集`,
       episodeCount: 1,
       language: series.language,
       userId: series.userId,
@@ -234,7 +234,11 @@ export async function runSeriesEpisodePipeline(projectId: string): Promise<void>
   );
 
   if (!parsed.scenes?.length) {
-    throw new Error("解析结果为空：未识别到任何场次。");
+    throw new Error(
+      project.language === "en"
+        ? "Parse result is empty: no scenes or characters found in the script. Try adding more content or adjusting the split settings."
+        : "解析结果为空：未识别到任何场次。",
+    );
   }
 
   // ── Stage 2: 角色池复用 ─────────────────────────────────────────────
@@ -381,11 +385,13 @@ export async function runSeriesEpisodePipeline(projectId: string): Promise<void>
       }
     });
   }
-  // 道具 fire-and-forget
-  for (const prop of propTasks) {
-    generatePropReference(prop.id, imageModel).catch((err) =>
-      logger.warn({ propId: prop.id, err }, "[series-pipeline] prop ref failed"),
-    );
+  // 道具参考图
+  if (propTasks.length > 0) {
+    await runPool(propTasks, imageConc, async (prop) => {
+      try { await generatePropReference(prop.id, imageModel); } catch (err) {
+        logger.warn({ propId: prop.id, err }, "[series-pipeline] prop ref failed");
+      }
+    });
   }
 
   // ── Stage 4: ECP Storyboard ─────────────────────────────────────────

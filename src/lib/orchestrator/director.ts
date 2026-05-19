@@ -120,8 +120,9 @@ export async function runEcpStoryboardForProject(projectId: string): Promise<voi
 
   // 先执行 screenplay 场景 → 剧本规范化 → JSON 剧本的多阶段流水线
   // （如果尚未完成）
+  const normPunct = project.language === "en" ? "." : "。";
   const hasNormalizedScenes = await db.scene.count({
-    where: { projectId, scriptText: { contains: "。" } },
+    where: { projectId, scriptText: { contains: normPunct } },
   }).then((n: number) => n > 0);
 
   if (!hasNormalizedScenes) {
@@ -394,7 +395,9 @@ export async function runParseAndStoryboard(projectId: string) {
 
       if (!parsed.scenes?.length) {
         throw new Error(
-          "解析结果为空：未识别到任何场次。请加长剧本内容、检查格式，或降低分集数后重试。",
+          project.language === "en"
+            ? "Parse result is empty: no scenes found. Try adding more content, checking formatting, or reducing the number of episodes."
+            : "解析结果为空：未识别到任何场次。请加长剧本内容、检查格式，或降低分集数后重试。",
         );
       }
 

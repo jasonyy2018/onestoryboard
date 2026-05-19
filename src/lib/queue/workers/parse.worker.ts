@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { Worker, Job } from "bullmq";
 import { z } from "zod";
 import { createBullConnection } from "@/lib/queue/connection";
 import { invokeShortDramaPipeline } from "@/lib/langgraph";
@@ -7,11 +7,23 @@ import { db } from "@/lib/db";
 
 const PayloadSchema = z.object({ projectId: z.string() });
 
+const EXTEND_LOCK_EVERY_MS = 5 * 60 * 1000; // extend lock every 5 min
+
 export const parseWorker = new Worker(
   "parse",
   async (job) => {
     const { projectId } = PayloadSchema.parse(job.data);
-    logger.info({ projectId, jobId: job.id }, "[parse-worker] start");
+    const log = logger.child({ projectId, jobId: job.id });
+    log.info("[parse-worker] start");
+
+    // Periodic lock extension — parse can run 30+ min with multiple LLM calls
+    const extendTimer = setInterval(async () => {
+      try {
+        await job.extendLock(job.token ?? "", 120 * 60 * 1000);
+      } catch {
+        // lock already released or job completed — ignore
+      }
+    }, EXTEND_LOCK_EVERY_MS);
 
     try {
       const project = await db.project.findUnique({ where: { id: projectId } });
@@ -22,11 +34,9 @@ export const parseWorker = new Worker(
       }
 
       if (project?.seriesId) {
-        // Series 项目：走角色池复用流水线
         const { runSeriesEpisodePipeline } = await import("@/lib/orchestrator/series");
         await runSeriesEpisodePipeline(projectId);
       } else {
-        // 独立单集项目：走原有流水线
         await invokeShortDramaPipeline(projectId);
       }
 
@@ -44,14 +54,16 @@ export const parseWorker = new Worker(
         });
       }
       throw err;
+    } finally {
+      clearInterval(extendTimer);
     }
   },
   {
     connection: createBullConnection(),
     concurrency: 4,
     lockDuration: 30 * 60 * 1000,
-    stalledInterval: 60 * 1000,
-    maxStalledCount: 1,
+    stalledInterval: 2 * 60 * 1000,
+    maxStalledCount: 2,
   },
 );
 

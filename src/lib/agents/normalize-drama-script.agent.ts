@@ -20,7 +20,19 @@ const NORMALIZE_SYSTEM_EN = `You are a professional short drama (短剧) script 
 - Characters in scene: reference characters by @NAME
 - description: vivid visual description in Chinese narrative style (not keyword lists)
 
-CRITICAL: Return ONLY valid JSON.`;
+CRITICAL: Return ONLY valid JSON. Output MUST be a JSON object with a "scenes" array, like:
+{
+  "scenes": [
+    {
+      "sceneId": "E1S01",
+      "description": "...",
+      "duration": 15,
+      "sceneType": "剧情",
+      "segmentBreak": false,
+      "charactersInScene": ["@张三"]
+    }
+  ]
+}`;
 
 const NORMALIZE_SYSTEM_ZH = `你是专业的短剧剧本编辑。将小说场次改编为结构化的分镜场景表。
 
@@ -38,7 +50,19 @@ const NORMALIZE_SYSTEM_ZH = `你是专业的短剧剧本编辑。将小说场次
 - charactersInScene：用 @角色名 引用角色
 - description：中文叙事式视觉描述（非关键词罗列）
 
-关键：只输出合法 JSON。`;
+关键：只输出合法 JSON。输出必须是一个包含"scenes"数组的 JSON 对象，格式如下：
+{
+  "scenes": [
+    {
+      "sceneId": "E1S01",
+      "description": "...",
+      "duration": 15,
+      "sceneType": "剧情",
+      "segmentBreak": false,
+      "charactersInScene": ["@张三"]
+    }
+  ]
+}`;
 
 export async function normalizeDramaScript(
   projectId: string,
@@ -71,8 +95,8 @@ export async function normalizeDramaScript(
     .join("\n\n");
 
   const prompt = isZh
-    ? `角色信息（连续性锁定）：\n${charContext}\n\n请将以下小说场次改编为规范化的分镜场景表（第 ${episodeNumber} 集）：\n\n${sceneText}\n\n输出每个场景的 sceneId、视觉描述、时长、类型、segment_break、出场角色。`
-    : `Characters (continuity lock):\n${charContext}\n\nNormalize the following scenes into structured shot tables (Episode ${episodeNumber}):\n\n${sceneText}\n\nOutput sceneId, visual description, duration, type, segment_break, characters_in_scene for each scene.`;
+    ? `角色信息（连续性锁定）：\n${charContext}\n\n请将以下小说场次改编为规范化的分镜场景表（第 ${episodeNumber} 集），输出格式严格参照 system prompt 中的 JSON 示例：\n\n${sceneText}`
+    : `Characters (continuity lock):\n${charContext}\n\nNormalize the following scenes into structured shot tables (Episode ${episodeNumber}), output format MUST follow the JSON example in the system prompt:\n\n${sceneText}`;
 
   const result = await generateStructured({
     schema: NormalizedScriptSchema,
